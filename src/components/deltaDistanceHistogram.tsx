@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { msgData } from '../pages/dashboard';
+import Modal from './modal';
 
-type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number, gsmCont: number; wifiCont: number; gpsCont: number };
+type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number; gsmCont: number; wifiCont: number; gpsCont: number; items: msgData[] };
 
 const TopBucketsBox = ({ binData }) => {
   const sortedBins = [...binData.bins].sort((a, b) => b.count - a.count);
@@ -37,6 +38,8 @@ const TopBucketsBox = ({ binData }) => {
 
 const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
   const [binWidth, setBinWidth] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
 
   const handleBinWidthChange = (e) => {
     const newBinWidth = parseInt(e.target.value, 10);
@@ -62,11 +65,13 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
           gpsCount: 0,
           gsmCont: 0,
           wifiCont: 0,
-          gpsCont: 0
+          gpsCont: 0,
+          items: [],
         };
       }
 
       bins[binIndex].count++;
+      bins[binIndex].items.push(item);
       totalCount++;
 
       let gsmCount = 0;
@@ -100,6 +105,20 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
     const usefulBins = bins.filter((bin) => bin !== undefined);
     return { bins: usefulBins, totalCount };
   }, [data.data, binWidth]);
+
+  const handleBarClick = (bin) => {
+    if (bin.activePayload[0].payload.items.length > 5000) {
+      // TODO: implement Toast mechanism  
+      return
+    }
+    setSelectedBin(bin.activePayload[0].payload);
+    setShowModal(true);
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    setSelectedBin(null);
+  };
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -147,7 +166,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
       </div>
       <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={binData.bins}>
+          <BarChart data={binData.bins} onClick={handleBarClick}>
             <XAxis dataKey="bin" axisLine={false} tickLine={false} />
             <YAxis type="number" scale="log" domain={['auto', 'auto']} axisLine={false} tickLine={false} />
             <CartesianGrid strokeDasharray="3 3" />
@@ -162,6 +181,9 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      {showModal && selectedBin && (
+        <Modal binData={selectedBin} onClose={handleModalClose} />
+      )}
     </div>
   );
 };
