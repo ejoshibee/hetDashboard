@@ -13,7 +13,7 @@ export function Modal({ binData, onClose }) {
               <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Details for Bin: {binData.bin}</h3>
                 <div className="mt-2 overflow-y-auto max-h-96">
-                  {binData.items.map((item, index) => (
+                  {binData.items.sort((a, b) => b.delta_distance - a.delta_distance).map((item, index: number) => (
                     <div key={index} className="border-b border-gray-200 py-4">
                       <h4 className="text-md font-medium text-gray-900">Message {index + 1}</h4>
                       <div className="mt-2 text-gray-500">

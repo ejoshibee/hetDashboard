@@ -136,7 +136,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
           <p>Count: {count}</p>
           <p>Percentage: {percentage}%</p>
           <p>GSM: {gsmCount}, WiFi: {wifiCount}, GPS: {gpsCount}</p>
-          <p>---Contributions---</p>
+          <p>---Accepted Contributions---</p>
           <p>GSM: {gsmCont}, WiFi: {wifiCont}, GPS: {gpsCont}</p>
         </div>
       );
