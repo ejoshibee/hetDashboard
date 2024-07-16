@@ -1,8 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { msgData } from '../pages/dashboard';
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
+import { msgData } from '../types';
 import Modal from './modal';
-
 type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number; gsmCont: number; wifiCont: number; gpsCont: number; items: msgData[] };
 
 const TopBucketsBox = ({ binData }) => {
@@ -12,7 +19,7 @@ const TopBucketsBox = ({ binData }) => {
 
   return (
     <div className="w-full bg-white border-3px rounded-lg shadow-md p-4 flex flex-col">
-      <h2 className="text-xl text-center font-bold mb-4">Top Buckets</h2>
+      <h2 className="text-xl text-center font-bold mb-4">Top Buckets: {totalCount} points</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {topBins.map((bin) => (
           <div key={bin.bin} className="bg-gray-100 p-3 rounded">
@@ -40,6 +47,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
   const [binWidth, setBinWidth] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
+  const [showHetOnly, setShowHetOnly] = useState(false);
 
   const handleBinWidthChange = (e) => {
     const newBinWidth = parseInt(e.target.value, 10);
@@ -52,7 +60,15 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
     const bins: Bin[] = [];
     let totalCount = 0;
 
-    for (const item of data.data) {
+    const filteredData = showHetOnly
+      ? data.data.filter(item => {
+        return item.msg_geo !== null
+          && JSON.parse(item.msg_geo).hasOwnProperty("heterogenousLookup")
+          && JSON.parse(item.msg_geo).heterogenousLookup === true
+      })
+      : data.data;
+
+    for (const item of filteredData) {
       const km = item.delta_distance / 1000;
       const binIndex = Math.floor(km / binWidth);
 
@@ -104,7 +120,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
 
     const usefulBins = bins.filter((bin) => bin !== undefined);
     return { bins: usefulBins, totalCount };
-  }, [data.data, binWidth]);
+  }, [data.data, binWidth, showHetOnly]);
 
   const handleBarClick = (bin) => {
     if (bin.activePayload[0].payload.items.length > 5000) {
@@ -145,6 +161,22 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
     return null;
   };
 
+  useEffect(() => {
+    const originalConsoleError = console.error;
+
+    console.error = (...args: any[]) => {
+      if (typeof args[0] === "string" && /defaultProps/.test(args[0])) {
+        return;
+      }
+
+      originalConsoleError(...args);
+    };
+
+    return () => {
+      console.error = originalConsoleError;
+    };
+  }, []);
+
   return (
     <div className="relative">
       <div className="mb-6 flex flex-col md:flex-row justify-between">
@@ -158,13 +190,21 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
               onChange={handleBinWidthChange}
               className="border rounded p-1 mr-4"
             />
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={showHetOnly}
+                onChange={(e) => setShowHetOnly(e.target.checked)}
+                className="mr-2"
+              />
+              Show Heterogeneous Lookup Only
+            </label>
           </div>
         </div>
         <div className="w-full md:w-auto">
           <TopBucketsBox binData={binData} />
         </div>
-      </div>
-      <div className="h-96">
+      </div>      <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={binData.bins} onClick={handleBarClick}>
             <XAxis dataKey="bin" axisLine={false} tickLine={false} />
