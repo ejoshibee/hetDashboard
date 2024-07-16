@@ -2,29 +2,39 @@ import {
   useState,
   Suspense
 } from "react"
+
 import {
   defer,
   Await,
   useLoaderData,
   useNavigate,
-  Form
+  Form,
+  useSearchParams
 } from "react-router-dom"
+
 import DeltaDistanceHistogram from "../components/deltaDistanceHistogram";
+
+import DatePicker from "react-datepicker";
+
 import { msgData } from "../types";
+import "react-datepicker/dist/react-datepicker.css";
 
 export const loader = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);
-  console.log(url)
   const imei = url.searchParams.get('imei');
-  console.log(imei)
+  const startDate = url.searchParams.get('startDate');
+  const endDate = url.searchParams.get('endDate');
 
-  // TODO: switch default fetch to be last 24 hours of data
-  const resp = await fetch(`http://localhost:3007/heterogenous_lookup${imei ? `?imei=${imei}` : ''}`);
+  let apiUrl = `http://localhost:3007/heterogenous_lookup`;
+  if (imei) apiUrl += `?imei=${imei}`;
+  if (startDate) apiUrl += `${imei ? '&' : '?'}startDate=${startDate}`;
+  if (endDate) apiUrl += `&endDate=${endDate}`;
+
+  const resp = await fetch(apiUrl);
   if (resp.status !== 200) {
     return defer({ success: false, data: 'There was an error fetching data' });
   }
   const data = await resp.json();
-
   return defer({ success: true, data: data });
 };
 
@@ -32,17 +42,26 @@ export const loader = async ({ request }: { request: Request }) => {
 export default function Dashboard() {
   const data = useLoaderData() as { success: boolean, data: msgData[] };
   const navigate = useNavigate();
+  const [params] = useSearchParams()
+
   const [imei, setImei] = useState('');
+  const [dateRange, setDateRange] = useState<[number | null, number | null]>([null, null]);
+  const [startDate, endDate] = dateRange;
 
   const handleImeiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImei(e.target.value);
   };
 
-  const handleSendToMap = () => {
-    // Save the data in local storage using the IMEI as the key
-    localStorage.setItem(`map-data-${imei}`, JSON.stringify(data.data));
+  const handleDateChange = (update: [Date | null, Date | null]) => {
+    const [start, end] = update;
+    setDateRange([
+      start ? Math.floor(start.getTime() / 1000) : null,
+      end ? Math.floor(end.getTime() / 1000) : null
+    ]);
+  };
 
-    // Navigate to the map route with the IMEI as a query parameter
+  const handleSendToMap = () => {
+    localStorage.setItem(`map-data-${imei}`, JSON.stringify(data.data));
     navigate(`/map?imei=${imei}`);
   };
 
@@ -56,15 +75,33 @@ export default function Dashboard() {
             name="imei"
             value={imei}
             onChange={handleImeiChange}
-            placeholder="Enter device imei..."
+            placeholder={params.get("imei") ? params.get("imei") : "Enter device imei..."}
+            className="border rounded p-1 mr-2"
+          />
+          <input
+            type="hidden"
+            name="startDate"
+            value={startDate || ''}
+          />
+          <input
+            type="hidden"
+            name="endDate"
+            value={endDate || ''}
+          />
+          <DatePicker
+            selectsRange={true}
+            startDate={startDate ? new Date(startDate * 1000) : null}
+            endDate={endDate ? new Date(endDate * 1000) : null}
+            onChange={handleDateChange}
+            isClearable={true}
+            placeholderText="Select date range"
             className="border rounded p-1 mr-2"
           />
           <button
             type="submit"
-            // onClick={handleImeiSubmit}
             className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
           >
-            View IMEI
+            View Data
           </button>
         </Form>
         <button
@@ -79,6 +116,6 @@ export default function Dashboard() {
           {(data: msgData[]) => <DeltaDistanceHistogram data={data} />}
         </Await>
       </Suspense>
-    </div >
+    </div>
   );
 }
