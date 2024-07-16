@@ -44,6 +44,7 @@ const TopBucketsBox = ({ binData }) => {
 };
 
 const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
+  console.log("data fetched")
   const [binWidth, setBinWidth] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
@@ -61,12 +62,12 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
     let totalCount = 0;
 
     const filteredData = showHetOnly
-      ? data.data.filter(item => {
+      ? data.filter(item => {
         return item.msg_geo !== null
           && JSON.parse(item.msg_geo).hasOwnProperty("heterogenousLookup")
           && JSON.parse(item.msg_geo).heterogenousLookup === true
       })
-      : data.data;
+      : data;
 
     for (const item of filteredData) {
       const km = item.delta_distance / 1000;
@@ -120,7 +121,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
 
     const usefulBins = bins.filter((bin) => bin !== undefined);
     return { bins: usefulBins, totalCount };
-  }, [data.data, binWidth, showHetOnly]);
+  }, [data, binWidth, showHetOnly]);
 
   const handleBarClick = (bin) => {
     if (bin.activePayload[0].payload.items.length > 5000) {
@@ -204,7 +205,8 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
         <div className="w-full md:w-auto">
           <TopBucketsBox binData={binData} />
         </div>
-      </div>      <div className="h-96">
+      </div>
+      <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={binData.bins} onClick={handleBarClick}>
             <XAxis dataKey="bin" axisLine={false} tickLine={false} />

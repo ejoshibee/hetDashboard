@@ -30,19 +30,22 @@ export const loader = async ({ request }: { request: Request }) => {
   if (startDate) apiUrl += `${imei ? '&' : '?'}startDate=${startDate}`;
   if (endDate) apiUrl += `&endDate=${endDate}`;
 
-  const resp = await fetch(apiUrl);
-  if (resp.status !== 200) {
-    return defer({ success: false, data: 'There was an error fetching data' });
-  }
-  const data = await resp.json();
-  return defer({ success: true, data: data });
+  const dataPromise = fetch(apiUrl).then(async (resp) => {
+    if (resp.status !== 200) {
+      throw new Error('There was an error fetching data');
+    }
+    const data = await resp.json();
+    return data.data;
+  });
+
+  return defer({ data: dataPromise });
 };
 
 
 export default function Dashboard() {
-  const data = useLoaderData() as { success: boolean, data: msgData[] };
+  const { data } = useLoaderData() as { data: Promise<msgData[]> };
   const navigate = useNavigate();
-  const [params] = useSearchParams()
+  const [params] = useSearchParams();
 
   const [imei, setImei] = useState('');
   const [dateRange, setDateRange] = useState<[number | null, number | null]>([null, null]);
@@ -112,8 +115,11 @@ export default function Dashboard() {
         </button>
       </div>
       <Suspense fallback={<div className="text-gray-500 font-semibold">Loading...</div>}>
-        <Await resolve={data?.data}>
-          {(data: msgData[]) => <DeltaDistanceHistogram data={data} />}
+        <Await
+          resolve={data}
+          errorElement={<div>Error loading data</div>}
+        >
+          {(resolvedData: msgData[]) => <DeltaDistanceHistogram data={resolvedData} />}
         </Await>
       </Suspense>
     </div>
