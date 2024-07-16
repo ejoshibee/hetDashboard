@@ -50,17 +50,13 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
   const [showHetOnly, setShowHetOnly] = useState(false);
+  const [isBuilding, setIsBuilding] = useState(true)
 
   const navigate = useNavigate()
 
-  const handleBinWidthChange = (e) => {
-    const newBinWidth = parseInt(e.target.value, 10);
-    if (!isNaN(newBinWidth) && newBinWidth > 0) {
-      setBinWidth(newBinWidth);
-    }
-  };
-
   const binData = useMemo(() => {
+    console.log("building chart")
+
     const bins: Bin[] = [];
     let totalCount = 0;
 
@@ -123,8 +119,19 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
     }
 
     const usefulBins = bins.filter((bin) => bin !== undefined);
+
+    console.log("Histogram built");
+    setIsBuilding(false);
+
     return { bins: usefulBins, totalCount };
   }, [data, binWidth, showHetOnly]);
+
+  const handleBinWidthChange = (e) => {
+    const newBinWidth = parseInt(e.target.value, 10);
+    if (!isNaN(newBinWidth) && newBinWidth > 0) {
+      setBinWidth(newBinWidth);
+    }
+  };
 
   const handleBarClick = (bin) => {
     if (bin.activePayload[0].payload.items.length > 5000) {
@@ -187,6 +194,11 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
       console.error = originalConsoleError;
     };
   }, []);
+
+  // render a loading state while we compute the bindata for histogram
+  if (isBuilding) {
+    return <div className="text-gray-500 font-semibold">Building histogram...</div>;
+  }
 
   return (
     <div className="relative">

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Marker, MapContainer, TileLayer, Polyline, Popup } from 'react-leaflet';
-import L from 'leaflet'
+import React, { useState, useEffect } from 'react';
+import { Marker, MapContainer, TileLayer, Polyline, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { msgData } from '../types';
 
@@ -8,8 +8,28 @@ interface LocationImpactMapProps {
   data: msgData[];
 }
 
+const BoundsUpdater = ({ data }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (data.length > 0) {
+      const bounds = data.reduce((acc, msg) => {
+        const heteroGeo = JSON.parse(msg.heterogenous_geo);
+        const msgGeo = JSON.parse(msg.msg_geo);
+        return acc
+          .extend([heteroGeo.lat, heteroGeo.lng])
+          .extend([msgGeo.lat, msgGeo.lng]);
+      }, L.latLngBounds([]));
+
+      map.fitBounds(bounds);
+    }
+  }, [map, data]);
+
+  return null;
+};
+
 const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
-  console.log(JSON.parse(data[0].heterogenous_geo).lat)
+  console.log(JSON.parse(data[0].heterogenous_geo).lat);
   const [impactMetric, setImpactMetric] = useState<'accuracy' | 'deltaDistance'>('accuracy');
 
   const renderMarkers = () => {
@@ -49,42 +69,40 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
           </Popup>
         </Marker>,
 
-        // Marker for msg_geo (default Leaflet marker)
+        // Marker for msg geo (blue)
         <Marker
           key={`msg-${index}`}
           position={msgGeoPosition}
         >
           <Popup>
             <div>
-              <h3>Msg Geo</h3>
+              <h3>Message Geo</h3>
               <p>Lat: {msgGeo.lat}, Lng: {msgGeo.lng}</p>
-              <p>Accuracy: {msgGeo.accuracy} m</p>
-              <p>Tech: {msgGeo.tech}</p>
+              <p>Reported Accuracy: {msgGeo.reported_accuracy} m</p>
+              <p>Actual Accuracy: {msgGeo.accuracy} m</p>
             </div>
           </Popup>
-        </Marker>
+        </Marker>,
+
+        // Line between the two positions
+        <Polyline
+          key={`line-${index}`}
+          positions={[msgGeoPosition, heteroPosition]}
+          color="blue"
+        />
       ];
     });
   };
+
   return (
-    <div className="h-screen">
-      <div className="mb-4">
-        <label className="mr-2">Color by:</label>
-        <select
-          value={impactMetric}
-          onChange={(e) => setImpactMetric(e.target.value as 'accuracy' | 'deltaDistance')}
-          className="p-2 border rounded"
-        >
-          <option value="accuracy">Accuracy</option>
-          <option value="deltaDistance">Delta Distance</option>
-        </select>
-      </div>
-      <MapContainer center={[51.505, -0.09]} zoom={2} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
+    <div className="h-full w-full">
+      <MapContainer center={[0, 0]} zoom={2} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {renderMarkers()}
+        <BoundsUpdater data={data} />
       </MapContainer>
     </div>
   );

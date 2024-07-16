@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import { Suspense } from 'react';
 import { defer, Await, useLoaderData, useSearchParams } from 'react-router-dom';
 import LocationImpactMap from '../components/locationImpactMap';
 
@@ -25,24 +25,24 @@ export default function Map() {
   const bin = searchParams.get('bin');
 
   return (
-    <div className="p-4">
+    <div className="flex flex-col h-full">
       <h1 className="text-2xl font-bold mb-4">Map View for Bin: {bin}</h1>
-      <Suspense fallback={<div>Loading map data...</div>}>
-        <Await
-          resolve={data}
-          errorElement={<div>Error loading map data</div>}
-        >
-          {(resolvedData) => {
-            console.log(resolvedData)
-            return resolvedData.success ? (
-              <LocationImpactMap data={resolvedData.data} />
-            ) : (
-              <div className="text-red-500">{resolvedData.error}</div>
-            )
-          }
-          }
-        </Await>
-      </Suspense>
+      <div className='flex-1 overflow-hidden'>
+        <Suspense fallback={<div>Loading map data...</div>}>
+          <Await
+            resolve={data}
+            errorElement={<div>Error loading map data</div>}
+          >
+            {(resolvedData) =>
+              resolvedData.success ? (
+                <LocationImpactMap data={resolvedData.data} />
+              ) : (
+                <div className="text-red-500">{resolvedData.error}</div>
+              )
+            }
+          </Await>
+        </Suspense>
+      </div>
     </div>
   );
 }
