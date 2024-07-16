@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Marker, MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { Marker, MapContainer, TileLayer, Polyline, Popup } from 'react-leaflet';
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css';
 import { msgData } from '../types';
 
@@ -8,42 +9,63 @@ interface LocationImpactMapProps {
 }
 
 const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
-  // console.log(`data from LocationImpactMap: ${JSON.stringify(data, null, 2)}`)
   console.log(JSON.parse(data[0].heterogenous_geo).lat)
   const [impactMetric, setImpactMetric] = useState<'accuracy' | 'deltaDistance'>('accuracy');
 
-  const getColor = (value: number, max: number) => {
-    const hue = ((1 - value / max) * 120).toString(10);
-    return `hsl(${hue}, 100%, 50%)`;
-  };
-
   const renderMarkers = () => {
-    const maxValue = Math.max(...data.map(msg =>
-      impactMetric === 'accuracy' ? JSON.parse(msg.heterogenous_geo).accuracy : msg.delta_distance
-    ));
+    const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
 
-    return data.map((msg: msgData, index) => {
-      const value = impactMetric === 'accuracy' ? JSON.parse(msg.heterogenous_geo).accuracy : msg.delta_distance;
-      const color = getColor(value, maxValue);
-      return (
+    return data.flatMap((msg: msgData, index) => {
+      const heteroGeo = JSON.parse(msg.heterogenous_geo);
+      const msgGeo = JSON.parse(msg.msg_geo);
+
+      const heteroPosition: L.LatLngExpression = [heteroGeo.lat, heteroGeo.lng];
+      const msgGeoPosition: L.LatLngExpression = [msgGeo.lat, msgGeo.lng];
+
+      return [
+        // Marker for heterogeneous geo (red)
         <Marker
-          key={index}
-          position={[JSON.parse(msg.heterogenous_geo).lat, JSON.parse(msg.heterogenous_geo).lng]}
+          key={`hetero-${index}`}
+          position={heteroPosition}
+          icon={redIcon}
         >
           <Popup>
             <div>
+              <h3>Heterogeneous Geo</h3>
+              <p>Lat: {heteroGeo.lat}, Lng: {heteroGeo.lng}</p>
               <p>Delta Distance: {msg.delta_distance} m</p>
-              <p>Accuracy: {JSON.parse(msg.heterogenous_geo).accuracy} m</p>
-              <p>Tech: {JSON.parse(msg.msg_geo).tech}</p>
+              <p>Accuracy: {heteroGeo.accuracy} m</p>
+              <p>Tech: {msgGeo.tech}</p>
               <p>GSM Count: {JSON.parse(msg.data).filter(d => d.type === 'gsm').length}</p>
               <p>WiFi Count: {JSON.parse(msg.data).filter(d => d.type === 'wifi').length}</p>
             </div>
           </Popup>
+        </Marker>,
+
+        // Marker for msg_geo (default Leaflet marker)
+        <Marker
+          key={`msg-${index}`}
+          position={msgGeoPosition}
+        >
+          <Popup>
+            <div>
+              <h3>Msg Geo</h3>
+              <p>Lat: {msgGeo.lat}, Lng: {msgGeo.lng}</p>
+              <p>Accuracy: {msgGeo.accuracy} m</p>
+              <p>Tech: {msgGeo.tech}</p>
+            </div>
+          </Popup>
         </Marker>
-      );
+      ];
     });
   };
-
   return (
     <div className="h-screen">
       <div className="mb-4">
