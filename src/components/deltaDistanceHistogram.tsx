@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { msgData } from '../types';
 import Modal from './modal';
+import { useNavigate } from 'react-router-dom';
 type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number; gsmCont: number; wifiCont: number; gpsCont: number; items: msgData[] };
 
 const TopBucketsBox = ({ binData }) => {
@@ -49,6 +50,8 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
   const [showHetOnly, setShowHetOnly] = useState(false);
+
+  const navigate = useNavigate()
 
   const handleBinWidthChange = (e) => {
     const newBinWidth = parseInt(e.target.value, 10);
@@ -130,6 +133,13 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
     }
     setSelectedBin(bin.activePayload[0].payload);
     setShowModal(true);
+  };
+
+  const handleSendToMap = () => {
+    if (selectedBin) {
+      localStorage.setItem('map-data', JSON.stringify(selectedBin.items));
+      navigate(`/map?bin=${encodeURIComponent(selectedBin.bin)}`);
+    }
   };
 
   const handleModalClose = () => {
@@ -224,7 +234,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
         </ResponsiveContainer>
       </div>
       {showModal && selectedBin && (
-        <Modal binData={selectedBin} onClose={handleModalClose} />
+        <Modal binData={selectedBin} onClose={handleModalClose} handleSendToMap={handleSendToMap} />
       )}
     </div>
   );
