@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Marker, MapContainer, TileLayer, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -13,7 +13,7 @@ const BoundsUpdater = ({ data }) => {
 
   useEffect(() => {
     if (data.length > 0) {
-      const bounds = data.reduce((acc, msg) => {
+      const bounds = data.reduce((acc: L.LatLngBounds, msg: msgData) => {
         const heteroGeo = JSON.parse(msg.heterogenous_geo);
         const msgGeo = JSON.parse(msg.msg_geo);
         return acc
@@ -29,8 +29,7 @@ const BoundsUpdater = ({ data }) => {
 };
 
 const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
-  console.log(JSON.parse(data[0].heterogenous_geo).lat);
-  const [impactMetric, setImpactMetric] = useState<'accuracy' | 'deltaDistance'>('accuracy');
+  console.log(`impactMap rendering data: ${JSON.stringify(data, null, 2)}`)
 
   const renderMarkers = () => {
     const redIcon = new L.Icon({
@@ -58,13 +57,14 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
         >
           <Popup>
             <div>
-              <h3>Heterogeneous Geo</h3>
+              <h2>Heterogeneous Geo</h2>
               <p>Lat: {heteroGeo.lat}, Lng: {heteroGeo.lng}</p>
               <p>Delta Distance: {msg.delta_distance} m</p>
               <p>Accuracy: {heteroGeo.accuracy} m</p>
-              <p>Tech: {msgGeo.tech}</p>
               <p>GSM Count: {JSON.parse(msg.data).filter(d => d.type === 'gsm').length}</p>
               <p>WiFi Count: {JSON.parse(msg.data).filter(d => d.type === 'wifi').length}</p>
+              <p>Msg_uuid: {msgGeo.msg_source} </p>
+              <p>Date: {msg.created_date} </p>
             </div>
           </Popup>
         </Marker>,
@@ -76,10 +76,13 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
         >
           <Popup>
             <div>
-              <h3>Message Geo</h3>
+              <h2>Message Geo</h2>
+              <p>Tech: {msgGeo.tech.toUpperCase()} </p>
               <p>Lat: {msgGeo.lat}, Lng: {msgGeo.lng}</p>
-              <p>Reported Accuracy: {msgGeo.reported_accuracy} m</p>
-              <p>Actual Accuracy: {msgGeo.accuracy} m</p>
+              <p>Reported Accuracy: {msgGeo.reported_accuracy}m</p>
+              <p>Actual Accuracy: {msgGeo.accuracy}m</p>
+              <p>Msg_uuid: {msgGeo.msg_source} </p>
+              <p>Date: {msg.created_date} </p>
             </div>
           </Popup>
         </Marker>,
