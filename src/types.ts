@@ -1,3 +1,10 @@
+interface GpsData {
+  accuracy: number;
+  lat: number;
+  lng: number;
+  type: 'gps';
+  used?: boolean;
+}
 interface WifiData {
   mac_address: string;
   accuracy: number;
@@ -16,6 +23,7 @@ interface GsmData {
   lat: number;
   lng: number;
   type: 'gsm';
+  used?: boolean;
 }
 
 interface MsgGeo {
@@ -37,7 +45,7 @@ interface HeterogenousGeo {
 
 export interface msgData {
   id: number;
-  data: (WifiData | GsmData)[];
+  data: (WifiData | GsmData | GpsData)[];
   msg_geo: MsgGeo;
   heterogenous_geo: HeterogenousGeo;
   created_date: number;
