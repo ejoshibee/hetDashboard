@@ -1,16 +1,22 @@
 import { Suspense } from 'react';
-import { defer, Await, useLoaderData, useSearchParams } from 'react-router-dom';
+import { defer, Await, useLoaderData, useSearchParams, useNavigate } from 'react-router-dom';
 import LocationImpactMap from '../components/locationImpactMap';
 
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
   const bin = url.searchParams.get('bin');
 
+  const imei = url.searchParams.get('imei')
+  console.log(`imei: ${imei}`)
+
   if (!bin) {
     return defer({ success: false, error: "No bin provided" });
   }
+  let mapData = localStorage.getItem('map-data')
+  if (localStorage.getItem(`map-data-${imei}`)) {
+    mapData = localStorage.getItem(`map-data-${imei}`);
+  }
 
-  const mapData = localStorage.getItem('map-data');
   if (!mapData) {
     return defer({ success: false, error: "No data found for this bin" });
   }
@@ -22,11 +28,25 @@ export const loader = async ({ request }) => {
 export default function Map() {
   const data = useLoaderData();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate()
   const bin = searchParams.get('bin');
+  const imei = searchParams.get('imei')
+
+  const handleNavClick = () => {
+    // console.log(imei)
+    navigate(`/dashboard?imei=${imei ? imei : ""}`)
+  }
+
 
   return (
     <div className="flex flex-col h-full">
-      <h1 className="text-2xl font-bold mb-4">Map View for Bin: {bin}</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Map View for Bin: {bin}</h1>
+        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          onClick={handleNavClick}>
+          View on dashboard
+        </button>
+      </div>
       <div className='flex-1 overflow-hidden'>
         <Suspense fallback={<div>Loading map data...</div>}>
           <Await

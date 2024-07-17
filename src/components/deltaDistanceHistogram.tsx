@@ -44,8 +44,8 @@ const TopBucketsBox = ({ binData }) => {
   );
 };
 
-const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
-  console.log("data fetched")
+const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ data, imei }) => {
+  console.log("data fetched", data, imei)
   const [binWidth, setBinWidth] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
@@ -145,7 +145,10 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
   const handleSendToMap = () => {
     if (selectedBin) {
       localStorage.setItem('map-data', JSON.stringify(selectedBin.items));
-      navigate(`/map?bin=${encodeURIComponent(selectedBin.bin)}`);
+      if (imei) {
+        localStorage.setItem(`map-data-${imei}`, JSON.stringify(selectedBin.items))
+      }
+      navigate(`/map?bin=${encodeURIComponent(selectedBin.bin)}&imei=${imei ? imei : ''}`);
     }
   };
 

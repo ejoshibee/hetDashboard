@@ -119,7 +119,7 @@ export default function Dashboard() {
           resolve={data}
           errorElement={<div>Error loading data</div>}
         >
-          {(resolvedData: msgData[]) => <DeltaDistanceHistogram data={resolvedData} />}
+          {(resolvedData: msgData[]) => <DeltaDistanceHistogram data={resolvedData} imei={imei} />}
         </Await>
       </Suspense>
     </div>
