@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { defer, Await, useLoaderData, useSearchParams, useNavigate } from 'react-router-dom';
 import LocationImpactMap from '../components/locationImpactMap';
 
-export const loader = async ({ request }) => {
+export const loader = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);
   const bin = url.searchParams.get('bin');
 

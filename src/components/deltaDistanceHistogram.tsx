@@ -13,7 +13,7 @@ import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
 type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number; gsmCont: number; wifiCont: number; gpsCont: number; items: msgData[] };
 
-const TopBucketsBox = ({ binData }) => {
+const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number } }) => {
   const sortedBins = [...binData.bins].sort((a, b) => b.count - a.count);
   const topBins = sortedBins.slice(0, 5);
   const totalCount = binData.totalCount;
@@ -64,8 +64,8 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
     const filteredData = showHetOnly
       ? data.filter(item => {
         return item.msg_geo !== null
-          && JSON.parse(item.msg_geo).hasOwnProperty("heterogenousLookup")
-          && JSON.parse(item.msg_geo).heterogenousLookup === true
+          && Object.prototype.hasOwnProperty.call(item.msg_geo, "heterogenousLookup")
+          && (item.msg_geo).heterogenousLookup === true
       })
       : data;
 
@@ -127,7 +127,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
     return { bins: usefulBins, totalCount };
   }, [data, binWidth, showHetOnly]);
 
-  const handleBinWidthChange = (e) => {
+  const handleBinWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newBinWidth = parseInt(e.target.value, 10);
     if (!isNaN(newBinWidth) && newBinWidth > 0) {
       setBinWidth(newBinWidth);
@@ -159,6 +159,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
+    console.log(payload[0])
     if (active && payload && payload.length) {
       const count = payload[0].value;
       const percentage = ((count / binData.totalCount) * 100).toFixed(4);
