@@ -57,12 +57,12 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
         >
           <Popup>
             <div>
-              <h2>Heterogeneous Geo</h2>
-              <p>Lat: {heteroGeo.lat}, Lng: {heteroGeo.lng}</p>
-              <p>Delta Distance: {msg.delta_distance} m</p>
-              <p>Accuracy: {heteroGeo.accuracy} m</p>
-              <p>GSM Count: {JSON.parse(msg.data).filter(d => d.type === 'gsm').length}</p>
-              <p>WiFi Count: {JSON.parse(msg.data).filter(d => d.type === 'wifi').length}</p>
+              <h2>Heterogeneous Geo </h2>
+              <p>Lat: {heteroGeo.lat}, Lng: {heteroGeo.lng} </p>
+              <p>Delta Distance: {msg.delta_distance}m </p>
+              <p>Accuracy: {heteroGeo.accuracy}m </p>
+              <p>GSM Count: {JSON.parse(msg.data).filter(d => d.type === 'gsm').length} </p>
+              <p>WiFi Count: {JSON.parse(msg.data).filter(d => d.type === 'wifi').length} </p>
               <p>Msg_uuid: {msgGeo.msg_source} </p>
               <p>Date: {msg.created_date} </p>
             </div>
@@ -76,11 +76,12 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
         >
           <Popup>
             <div>
-              <h2>Message Geo</h2>
+              <h2>Message Geo </h2>
               <p>Tech: {msgGeo.tech.toUpperCase()} </p>
-              <p>Lat: {msgGeo.lat}, Lng: {msgGeo.lng}</p>
-              <p>Reported Accuracy: {msgGeo.reported_accuracy}m</p>
-              <p>Actual Accuracy: {msgGeo.accuracy}m</p>
+              <p>Imei: {msg.bee_imei} </p>
+              <p>Lat: {msgGeo.lat}, Lng: {msgGeo.lng} </p>
+              <p>Reported Accuracy: {msgGeo.reported_accuracy}m </p>
+              <p>Actual Accuracy: {msgGeo.accuracy}m </p>
               <p>Msg_uuid: {msgGeo.msg_source} </p>
               <p>Date: {msg.created_date} </p>
             </div>
