@@ -1,6 +1,7 @@
 import {
   useState,
-  Suspense
+  Suspense,
+  useRef
 } from "react"
 
 import {
@@ -47,7 +48,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
-  const [imei, setImei] = useState('');
+  const [imei, setImei] = useState(params.get("imei"));
+  const resolvedDataRef = useRef<msgData[] | null>(null);
   const [dateRange, setDateRange] = useState<[number | null, number | null]>([null, null]);
   const [startDate, endDate] = dateRange;
 
@@ -64,7 +66,12 @@ export default function Dashboard() {
   };
 
   const handleSendToMap = () => {
-    localStorage.setItem(`map-data-${imei}`, JSON.stringify(data.data));
+    if (!imei) {
+      alert("Please select an imei to view")
+      return
+    }
+    console.log(resolvedDataRef.current)
+    localStorage.setItem(`map-data-${imei}`, JSON.stringify(resolvedDataRef.current))
     navigate(`/map?imei=${imei}`);
   };
 
@@ -119,7 +126,13 @@ export default function Dashboard() {
           resolve={data}
           errorElement={<div>Error loading data</div>}
         >
-          {(resolvedData: msgData[]) => <DeltaDistanceHistogram data={resolvedData} imei={imei} />}
+          {(resolvedData: msgData[]) => {
+            // Update the state with resolved data
+            resolvedDataRef.current = resolvedData
+
+            // Render the component as before
+            return <DeltaDistanceHistogram data={resolvedData} imei={imei} />
+          }}
         </Await>
       </Suspense>
     </div>

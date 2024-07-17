@@ -9,9 +9,10 @@ export const loader = async ({ request }) => {
   const imei = url.searchParams.get('imei')
   console.log(`imei: ${imei}`)
 
-  if (!bin) {
-    return defer({ success: false, error: "No bin provided" });
+  if (!bin && !imei) {
+    return defer({ success: false, error: "No bin or imei provided" });
   }
+
   let mapData = localStorage.getItem('map-data')
   if (localStorage.getItem(`map-data-${imei}`)) {
     mapData = localStorage.getItem(`map-data-${imei}`);
@@ -42,7 +43,7 @@ export default function Map() {
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Map View for Bin: {bin}</h1>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold my-2 py-2 px-4 rounded"
           onClick={handleNavClick}>
           View on dashboard
         </button>
