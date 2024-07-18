@@ -1,17 +1,26 @@
-import React, { useState, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { msgData } from '../pages/dashboard';
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
+import { msgData } from '../types';
+import Modal from './modal';
+import { useNavigate } from 'react-router-dom';
+type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number; gsmCont: number; wifiCont: number; gpsCont: number; items: msgData[] };
 
-type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number, gsmCont: number; wifiCont: number; gpsCont: number };
-
-const TopBucketsBox = ({ binData }) => {
+const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number } }) => {
   const sortedBins = [...binData.bins].sort((a, b) => b.count - a.count);
   const topBins = sortedBins.slice(0, 5);
   const totalCount = binData.totalCount;
 
   return (
     <div className="w-full bg-white border-3px rounded-lg shadow-md p-4 flex flex-col">
-      <h2 className="text-xl text-center font-bold mb-4">Top Buckets</h2>
+      <h2 className="text-xl text-center font-bold mb-4">Top Buckets: {totalCount} points</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {topBins.map((bin) => (
           <div key={bin.bin} className="bg-gray-100 p-3 rounded">
@@ -35,21 +44,32 @@ const TopBucketsBox = ({ binData }) => {
   );
 };
 
-const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
-  const [binWidth, setBinWidth] = useState(1);
+const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ data, imei }) => {
+  console.log("data fetched", data, imei)
 
-  const handleBinWidthChange = (e) => {
-    const newBinWidth = parseInt(e.target.value, 10);
-    if (!isNaN(newBinWidth) && newBinWidth > 0) {
-      setBinWidth(newBinWidth);
-    }
-  };
+  const [binWidth, setBinWidth] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
+  const [showHetOnly, setShowHetOnly] = useState(false);
+  const [isBuilding, setIsBuilding] = useState(true)
+
+  const navigate = useNavigate()
 
   const binData = useMemo(() => {
+    console.log("building chart")
+
     const bins: Bin[] = [];
     let totalCount = 0;
 
-    for (const item of data.data) {
+    const filteredData = showHetOnly
+      ? data.filter(item => {
+        return item.msg_geo !== null
+          && Object.prototype.hasOwnProperty.call(item.msg_geo, "heterogenousLookup")
+          && (item.msg_geo).heterogenousLookup === true
+      })
+      : data;
+
+    for (const item of filteredData) {
       const km = item.delta_distance / 1000;
       const binIndex = Math.floor(km / binWidth);
 
@@ -62,11 +82,13 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
           gpsCount: 0,
           gsmCont: 0,
           wifiCont: 0,
-          gpsCont: 0
+          gpsCont: 0,
+          items: [],
         };
       }
 
       bins[binIndex].count++;
+      bins[binIndex].items.push(item);
       totalCount++;
 
       let gsmCount = 0;
@@ -98,10 +120,46 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
     }
 
     const usefulBins = bins.filter((bin) => bin !== undefined);
+
+    console.log("Histogram built");
+    setIsBuilding(false);
+
     return { bins: usefulBins, totalCount };
-  }, [data.data, binWidth]);
+  }, [data, binWidth, showHetOnly]);
+
+  const handleBinWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newBinWidth = parseInt(e.target.value, 10);
+    if (!isNaN(newBinWidth) && newBinWidth > 0) {
+      setBinWidth(newBinWidth);
+    }
+  };
+
+  const handleBarClick = (bin) => {
+    if (bin.activePayload[0].payload.items.length > 5000) {
+      // TODO: implement Toast mechanism  
+      return
+    }
+    setSelectedBin(bin.activePayload[0].payload);
+    setShowModal(true);
+  };
+
+  const handleSendToMap = () => {
+    if (selectedBin) {
+      localStorage.setItem('map-data', JSON.stringify(selectedBin.items));
+      if (imei) {
+        localStorage.setItem(`map-data-${imei}`, JSON.stringify(selectedBin.items))
+      }
+      navigate(`/map?bin=${encodeURIComponent(selectedBin.bin)}&imei=${imei ? imei : ''}`);
+    }
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    setSelectedBin(null);
+  };
 
   const CustomTooltip = ({ active, payload, label }) => {
+    console.log(payload[0])
     if (active && payload && payload.length) {
       const count = payload[0].value;
       const percentage = ((count / binData.totalCount) * 100).toFixed(4);
@@ -117,7 +175,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
           <p>Count: {count}</p>
           <p>Percentage: {percentage}%</p>
           <p>GSM: {gsmCount}, WiFi: {wifiCount}, GPS: {gpsCount}</p>
-          <p>---Contributions---</p>
+          <p>---Accepted Contributions---</p>
           <p>GSM: {gsmCont}, WiFi: {wifiCont}, GPS: {gpsCont}</p>
         </div>
       );
@@ -125,6 +183,27 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
 
     return null;
   };
+
+  useEffect(() => {
+    const originalConsoleError = console.error;
+
+    console.error = (...args: any[]) => {
+      if (typeof args[0] === "string" && /defaultProps/.test(args[0])) {
+        return;
+      }
+
+      originalConsoleError(...args);
+    };
+
+    return () => {
+      console.error = originalConsoleError;
+    };
+  }, []);
+
+  // render a loading state while we compute the bindata for histogram
+  if (isBuilding) {
+    return <div className="text-gray-500 font-semibold">Building histogram...</div>;
+  }
 
   return (
     <div className="relative">
@@ -139,6 +218,15 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
               onChange={handleBinWidthChange}
               className="border rounded p-1 mr-4"
             />
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={showHetOnly}
+                onChange={(e) => setShowHetOnly(e.target.checked)}
+                className="mr-2"
+              />
+              Show Heterogeneous Lookup Only
+            </label>
           </div>
         </div>
         <div className="w-full md:w-auto">
@@ -147,7 +235,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
       </div>
       <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={binData.bins}>
+          <BarChart data={binData.bins} onClick={handleBarClick}>
             <XAxis dataKey="bin" axisLine={false} tickLine={false} />
             <YAxis type="number" scale="log" domain={['auto', 'auto']} axisLine={false} tickLine={false} />
             <CartesianGrid strokeDasharray="3 3" />
@@ -162,6 +250,9 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[] }> = ({ data }) => {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      {showModal && selectedBin && (
+        <Modal binData={selectedBin} onClose={handleModalClose} handleSendToMap={handleSendToMap} />
+      )}
     </div>
   );
 };

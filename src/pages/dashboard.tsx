@@ -1,116 +1,119 @@
-import { useState, Suspense } from "react"
-import { defer, Await, useLoaderData, useNavigate } from "react-router-dom"
+import {
+  useState,
+  Suspense,
+  useRef
+} from "react"
+
+import {
+  defer,
+  Await,
+  useLoaderData,
+  useNavigate,
+  Form,
+  useSearchParams
+} from "react-router-dom"
+
 import DeltaDistanceHistogram from "../components/deltaDistanceHistogram";
 
+import DatePicker from "react-datepicker";
 
-interface WifiData {
-  mac_address: string;
-  accuracy: number;
-  lat: number;
-  lng: number;
-  type: 'wifi';
-  used?: boolean;
-}
-
-interface GsmData {
-  cid: number;
-  lac: number;
-  mcc: number;
-  mnc: number;
-  accuracy: number;
-  lat: number;
-  lng: number;
-  type: 'gsm';
-}
-
-interface MsgGeo {
-  status: string;
-  tech: string;
-  lat: string;
-  lng: string;
-  reported_accuracy: number;
-  accuracy: number;
-  msg_source: string;
-  heterogenousLookup: boolean;
-}
-
-interface HeterogenousGeo {
-  lat: number;
-  lng: number;
-  accuracy: number;
-}
-
-export interface msgData {
-  id: number;
-  data: (WifiData | GsmData)[];
-  msg_geo: MsgGeo;
-  heterogenous_geo: HeterogenousGeo;
-  created_date: number;
-  bee_imei: string;
-  msg_uuid: string;
-  account_id: number;
-  msg_geo_distance: number;
-  heterogenous_geo_distance: number;
-  delta_distance: number;
-}
+import { msgData } from "../types";
+import "react-datepicker/dist/react-datepicker.css";
 
 export const loader = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);
-  console.log(url)
   const imei = url.searchParams.get('imei');
-  console.log(imei)
+  const startDate = url.searchParams.get('startDate');
+  const endDate = url.searchParams.get('endDate');
 
-  // TODO: switch default fetch to be last 24 hours of data
-  const resp = await fetch(`http://localhost:3007/heterogenous_lookup${imei ? `?imei=${imei}` : ''}`);
-  if (resp.status !== 200) {
-    return defer({ success: false, data: 'There was an error fetching data' });
-  }
-  const data = await resp.json();
+  let apiUrl = `http://localhost:3007/heterogenous_lookup`;
+  if (imei) apiUrl += `?imei=${imei}`;
+  if (startDate) apiUrl += `${imei ? '&' : '?'}startDate=${startDate}`;
+  if (endDate) apiUrl += `&endDate=${endDate}`;
 
-  return defer({ success: true, data: data });
+  const dataPromise = fetch(apiUrl).then(async (resp) => {
+    if (resp.status !== 200) {
+      throw new Error('There was an error fetching data');
+    }
+    const data = await resp.json();
+    return data.data;
+  });
+
+  return defer({ data: dataPromise });
 };
 
 
 export default function Dashboard() {
-  const data = useLoaderData() as { success: boolean, data: msgData[] };
+  const { data } = useLoaderData() as { data: Promise<msgData[]> };
   const navigate = useNavigate();
-  const [imei, setImei] = useState('');
+  const [params] = useSearchParams();
+
+  const [imei, setImei] = useState(params.get("imei"));
+  const resolvedDataRef = useRef<msgData[] | null>(null);
+  const [dateRange, setDateRange] = useState<[number | null, number | null]>([null, null]);
+  const [startDate, endDate] = dateRange;
 
   const handleImeiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImei(e.target.value);
   };
 
-  const handleImeiSubmit = () => {
-    // Use the provided imei to navigate to the dashboard route with the query parameter
-    navigate(`/dashboard?imei=${imei}`);
+  const handleDateChange = (update: [Date | null, Date | null]) => {
+    const [start, end] = update;
+    setDateRange([
+      start ? Math.floor(start.getTime() / 1000) : null,
+      end ? Math.floor(end.getTime() / 1000) : null
+    ]);
   };
 
   const handleSendToMap = () => {
-    // Save the data in local storage using the IMEI as the key
-    localStorage.setItem(`map-data-${imei}`, JSON.stringify(data.data));
-
-    // Navigate to the map route with the IMEI as a query parameter
+    if (!imei) {
+      alert("Please select an imei to view")
+      return
+    }
+    console.log(resolvedDataRef.current)
+    localStorage.setItem(`map-data-${imei}`, JSON.stringify(resolvedDataRef.current))
     navigate(`/map?imei=${imei}`);
   };
 
   return (
     <div className="">
-      {/*<h1 className="text-3xl font-bold mb-4">Dashboard</h1> */}
       <div className="mb-4 flex items-center">
-        <label className="mr-2 font-lg font-semibold">IMEI:</label>
-        <input
-          type="text"
-          value={imei}
-          onChange={handleImeiChange}
-          placeholder="Enter device imei..."
-          className="border rounded p-1 mr-2"
-        />
-        <button
-          onClick={handleImeiSubmit}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
-        >
-          View IMEI
-        </button>
+        <Form method="get" action="/dashboard">
+          <label className="mr-2 font-lg font-semibold">IMEI:</label>
+          <input
+            type="text"
+            name="imei"
+            value={imei}
+            onChange={handleImeiChange}
+            placeholder={params.get("imei") ? params.get("imei") : "Enter device imei..."}
+            className="border rounded p-1 mr-2"
+          />
+          <input
+            type="hidden"
+            name="startDate"
+            value={startDate || ''}
+          />
+          <input
+            type="hidden"
+            name="endDate"
+            value={endDate || ''}
+          />
+          <DatePicker
+            selectsRange={true}
+            startDate={startDate ? new Date(startDate * 1000) : null}
+            endDate={endDate ? new Date(endDate * 1000) : null}
+            onChange={handleDateChange}
+            isClearable={true}
+            placeholderText="Select date range"
+            className="border rounded p-1 mr-2"
+          />
+          <button
+            type="submit"
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
+          >
+            View Data
+          </button>
+        </Form>
         <button
           onClick={handleSendToMap}
           className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
@@ -119,8 +122,17 @@ export default function Dashboard() {
         </button>
       </div>
       <Suspense fallback={<div className="text-gray-500 font-semibold">Loading...</div>}>
-        <Await resolve={data?.data}>
-          {(data: msgData[]) => <DeltaDistanceHistogram data={data} />}
+        <Await
+          resolve={data}
+          errorElement={<div>Error loading data</div>}
+        >
+          {(resolvedData: msgData[]) => {
+            // Update the state with resolved data
+            resolvedDataRef.current = resolvedData
+
+            // Render the component as before
+            return <DeltaDistanceHistogram data={resolvedData} imei={imei} />
+          }}
         </Await>
       </Suspense>
     </div>
