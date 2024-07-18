@@ -42,7 +42,7 @@ export default function Map() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Map View for Bin: {bin}</h1>
+        <h1 className="text-2xl font-bold">{bin ? `Map view for bin ${bin}` : `No bin selected. Viewing imei: ${imei}`}</h1>
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold my-2 py-2 px-4 rounded"
           onClick={handleNavClick}>
           View on dashboard
