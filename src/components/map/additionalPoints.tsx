@@ -1,5 +1,5 @@
 import React from 'react';
-import { Marker } from 'react-leaflet';
+import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { msgData } from '../../types';
 
@@ -26,8 +26,9 @@ const unusedgsmIcon = createIcon('red', 'gsm');
 const unusedwifiIcon = createIcon('red', 'wifi');
 
 const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
-  let hetData;
+  let hetData: msgData["data"];
   try {
+    console.log(typeof msg.data)
     hetData = JSON.parse(msg.data);
   } catch (error) {
     console.error('Failed to parse data:', error);
@@ -36,7 +37,18 @@ const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
 
   return hetData.map((d) => {
     const icon = d.type === 'wifi' ? (d.used ? wifiIcon : unusedwifiIcon) : (d.used ? gsmIcon : unusedgsmIcon);
-    return <Marker position={[d.lat, d.lng]} icon={icon} key={`${d.type}-${d.mac_address || d.cid}`} />;
+    const key = d.type === 'wifi' ? `${d.type}-${d.mac_address}` : d.type === 'gsm' ? `${d.type}-${d.cid}` : `${d.type}}`;
+    return <Marker
+      position={[d.lat, d.lng]}
+      icon={icon}
+      key={key} >
+      <Popup>
+        <div>
+          <p>{d.type === "wifi" ? `Mac Adress: ${d.mac_address}` : d.type === "gsm" ? `CID: ${d.cid}` : d.type}</p>
+          <p>Accuracy: {d.accuracy}</p>
+        </div>
+      </Popup>
+    </Marker>;
   });
 };
 
