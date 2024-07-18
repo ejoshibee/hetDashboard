@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Marker, MapContainer, TileLayer, Polyline, LayersControl, LayerGroup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -11,6 +11,7 @@ export interface LocationImpactMapProps {
 
 const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [visibleLayers, setVisibleLayers] = useState<Set<string>>(new Set(['All Markers']));
 
   const redIcon = useMemo(() => new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -21,7 +22,29 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
     shadowSize: [41, 41]
   }), []);
 
-  const renderMarkers = (msg: msgData, index: number) => {
+  const handleMarkerClick = useCallback((uuid: string) => {
+    setActiveFilter(prevFilter => {
+      if (prevFilter === uuid) {
+        // Clicking the active marker again, show all markers
+        setVisibleLayers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(`UUID: ${uuid}`);
+          return newSet;
+        });
+        return null;
+      } else {
+        // Clicking a new marker, hide others and check the layer
+        setVisibleLayers(prev => {
+          const newSet = new Set(prev);
+          newSet.add(`UUID: ${uuid}`);
+          return newSet;
+        });
+        return uuid;
+      }
+    });
+  }, []);
+
+  const renderMarkers = useCallback((msg: msgData, index: number) => {
     const heteroGeo = JSON.parse(msg.heterogenous_geo);
     const msgGeo = JSON.parse(msg.msg_geo);
 
@@ -30,18 +53,13 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
 
     const uuid = msgGeo.msg_source;
 
-    const handleClick = () => {
-      setActiveFilter(activeFilter === uuid ? null : uuid);
-    }
-
     return (
       <LayerGroup key={`group-${index}`}>
-        <Marker position={heteroPosition} icon={redIcon} eventHandlers={{ click: handleClick }}>
+        <Marker position={heteroPosition} icon={redIcon} eventHandlers={{ click: () => handleMarkerClick(uuid) }}>
           <Tooltip>
             <div>
               <h2>Heterogeneous Geo</h2>
               <p>Location: [lat: {heteroGeo.lat}, lng: {heteroGeo.lng}]</p>
-              <p>Imei: {msg.bee_imei}</p>
               <p>Msg_uuid: {msgGeo.msg_source}</p>
               <p>Date: {msg.created_date}</p>
               <p>Delta Distance: {msg.delta_distance}m</p>
@@ -51,25 +69,24 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
             </div>
           </Tooltip>
         </Marker>
-        <Marker position={msgGeoPosition} eventHandlers={{ click: handleClick }}>
+        <Marker position={msgGeoPosition} eventHandlers={{ click: () => handleMarkerClick(uuid) }}>
           <Tooltip>
             <div>
               <h2>Message Geo</h2>
-              <p>Location: [lat: {msgGeo.lat}, lng: {msgGeo.lng}]</p>
               <p>Tech: {msgGeo.tech.toUpperCase()}</p>
               <p>Imei: {msg.bee_imei}</p>
               <p>Msg_uuid: {msgGeo.msg_source}</p>
               <p>Date: {msg.created_date}</p>
+              <p>Location: [lat: {msgGeo.lat}, lng: {msgGeo.lng}]</p>
               <p>Reported Accuracy: {msgGeo.reported_accuracy}m</p>
-              <p>GSM Count: {JSON.parse(msg.data).filter(d => d.type === 'gsm').length}</p>
-              <p>WiFi Count: {JSON.parse(msg.data).filter(d => d.type === 'wifi').length}</p>
+              <p>Actual Accuracy: {msgGeo.accuracy}m</p>
             </div>
           </Tooltip>
         </Marker>
         <Polyline positions={[msgGeoPosition, heteroPosition]} color="blue" />
       </LayerGroup>
     );
-  };
+  }, [redIcon, handleMarkerClick]);
 
   const groupedByUuid = useMemo(() => {
     return data.reduce((acc, msg) => {
@@ -87,35 +104,62 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
     return data.filter(msg => JSON.parse(msg.msg_geo).msg_source === activeFilter);
   }, [data, activeFilter]);
 
+  const handleOverlayChange = useCallback((e: L.LayersControlEvent) => {
+    const layerName = e.name;
+    setVisibleLayers(prev => {
+      const newSet = new Set(prev);
+      if (e.type === 'overlayadd') {
+        newSet.add(layerName);
+      } else {
+        newSet.delete(layerName);
+      }
+      return newSet;
+    });
+
+    if (e.type === 'overlayadd' && layerName.startsWith('UUID:')) {
+      const uuid = layerName.split('UUID:')[1].trim();
+      setActiveFilter(uuid);
+    } else if (e.type === 'overlayremove' && layerName === 'All Markers') {
+      setActiveFilter(null);
+    }
+  }, []);
+
   return (
     <div className="h-full w-full">
-      <MapContainer center={[0, 0]} zoom={2} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
+      <MapContainer
+        center={[0, 0]}
+        zoom={2}
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={true}
+        whenCreated={(map) => {
+          map.on('overlayadd overlayremove', handleOverlayChange);
+        }}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <LayersControl position="topright">
-
           <LayersControl.Overlay checked name="All Markers">
             <LayerGroup>
               {filteredData.map((msg, index) => renderMarkers(msg, index))}
             </LayerGroup>
           </LayersControl.Overlay>
 
-          <LayersControl.Overlay name="By UUID">
-            {Object.entries(groupedByUuid).map(([uuid, messages]) => (
-              <LayersControl.Overlay key={uuid} name={`UUID: ${uuid}`}>
-                <LayerGroup>
-                  {messages
-                    .filter(msg => !activeFilter || JSON.parse(msg.msg_geo).msg_source === activeFilter)
-                    .map((msg, index) => renderMarkers(msg, index))}
-                </LayerGroup>
-              </LayersControl.Overlay>
-            ))}
-          </LayersControl.Overlay>
+          {Object.entries(groupedByUuid).map(([uuid, messages]) => (
+            <LayersControl.Overlay
+              key={uuid}
+              name={`UUID: ${uuid}`}
+              checked={visibleLayers.has(`UUID: ${uuid}`)}
+            >
+              <LayerGroup>
+                {messages.map((msg, index) => renderMarkers(msg, index))}
+              </LayerGroup>
+            </LayersControl.Overlay>
+          ))}
         </LayersControl>
 
-        <BoundsUpdater data={data} />
+        <BoundsUpdater data={filteredData} />
       </MapContainer>
     </div>
   );
