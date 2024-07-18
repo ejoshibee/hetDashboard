@@ -2,16 +2,53 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Marker, MapContainer, TileLayer, Polyline, LayersControl, LayerGroup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { msgData } from '../types';
+import { msgData } from '../../types';
 import BoundsUpdater from './boundsUpdates';
 
 export interface LocationImpactMapProps {
   data: msgData[];
 }
 
+const gsmIcon = L.divIcon({
+  html: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="16" width="4" height="4" fill="green" stroke="black" stroke-width="1"/>
+    <rect x="8" y="12" width="4" height="8" fill="green" stroke="black" stroke-width="1"/>
+    <rect x="14" y="8" width="4" height="12" fill="green" stroke="black" stroke-width="1"/>
+    <rect x="20" y="4" width="4" height="16" fill="green" stroke="black" stroke-width="1"/>
+  </svg>`,
+  className: 'gsm-icon',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
+})
+
+const wifiIcon = L.divIcon({
+  html: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 21L15.5 16.5C14.5 15.5 13.3 15 12 15C10.7 15 9.5 15.5 8.5 16.5L12 21Z" fill="#bcbc06" stroke="black" stroke-width="1"/>
+<path d="M12 3C7.95 3 4.21 4.34 1.2 6.6L3 9C5.5 7.12 8.62 6 12 6C15.38 6 18.5 7.12 21 9L22.8 6.6C19.79 4.34 16.05 3 12 3Z" fill="#bcbc06" stroke="black" stroke-width="1"/>
+<path d="M12 9C9.3 9 6.81 9.89 4.8 11.4L6.6 13.8C8.1 12.67 9.97 12 12 12C14.03 12 15.9 12.67 17.4 13.8L19.2 11.4C17.19 9.89 14.7 9 12 9Z" fill="#bcbc06" stroke="black" stroke-width="1"/>
+</svg>`,
+  className: 'wifi-icon',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
+})
+
+const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
+  const hetData = JSON.parse(msg.data)
+  console.log(hetData)
+
+  return hetData.map((d) => {
+    if (d.type === 'wifi') {
+      return <Marker position={[d.lat, d.lng]} icon={wifiIcon} key={`${d.type}-${d.uuid}`} />
+    } else if (d.type === 'gsm') {
+      return <Marker position={[d.lat, d.lng]} icon={gsmIcon} key={`${d.type}-${d.uuid}`} />
+    }
+  });
+};
+
 const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [visibleLayers, setVisibleLayers] = useState<Set<string>>(new Set(['All Markers']));
+  const [inspectedUuid, setInspectedUuid] = useState<string | null>(null);
 
   const redIcon = useMemo(() => new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -24,6 +61,8 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
 
   const handleMarkerClick = useCallback((uuid: string) => {
     setActiveFilter(prevFilter => {
+      console.log(`prevFilter: ${prevFilter}, uuid: ${uuid}`);
+      setInspectedUuid(prevUuid => prevUuid === uuid ? null : uuid); // Toggle inspectedUuid
       if (prevFilter === uuid) {
         // Clicking the active marker again, show all markers
         setVisibleLayers(prev => {
@@ -42,9 +81,10 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
         return uuid;
       }
     });
-  }, []);
+  }, [inspectedUuid]);
 
-  const renderMarkers = useCallback((msg: msgData, index: number) => {
+  const renderMarkers = useCallback((msg: msgData) => {
+
     const heteroGeo = JSON.parse(msg.heterogenous_geo);
     const msgGeo = JSON.parse(msg.msg_geo);
 
@@ -54,8 +94,13 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
     const uuid = msgGeo.msg_source;
 
     return (
-      <LayerGroup key={`group-${index}`}>
-        <Marker position={heteroPosition} icon={redIcon} eventHandlers={{ click: () => handleMarkerClick(uuid) }}>
+      <LayerGroup key={`group-${uuid}`}>
+        <Marker
+          position={heteroPosition}
+          icon={redIcon}
+          eventHandlers={{ click: () => handleMarkerClick(uuid) }}
+          zIndexOffset={1000}
+        >
           <Tooltip>
             <div>
               <h2>Heterogeneous Geo</h2>
@@ -69,7 +114,9 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
             </div>
           </Tooltip>
         </Marker>
-        <Marker position={msgGeoPosition} eventHandlers={{ click: () => handleMarkerClick(uuid) }}>
+        <Marker
+          position={msgGeoPosition}
+          eventHandlers={{ click: () => handleMarkerClick(uuid) }}>
           <Tooltip>
             <div>
               <h2>Message Geo</h2>
@@ -84,9 +131,12 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
           </Tooltip>
         </Marker>
         <Polyline positions={[msgGeoPosition, heteroPosition]} color="blue" />
+        {inspectedUuid === uuid && (
+          <AdditionalPoints msg={msg} />
+        )}
       </LayerGroup>
     );
-  }, [redIcon, handleMarkerClick]);
+  }, [redIcon, handleMarkerClick, inspectedUuid]);
 
   const groupedByUuid = useMemo(() => {
     return data.reduce((acc, msg) => {

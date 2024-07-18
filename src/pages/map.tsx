@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { defer, Await, useLoaderData, useSearchParams, useNavigate } from 'react-router-dom';
-import LocationImpactMap from '../components/locationImpactMap';
+import LocationImpactMap from '../components/map/locationImpactMap';
 
 export const loader = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import L from 'leaflet';
 import { useMap } from 'react-leaflet';
-import { msgData } from '../types';
+import { msgData } from '../../types';
 import { LocationImpactMapProps } from './locationImpactMap';
 
 
