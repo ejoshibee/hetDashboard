@@ -2,45 +2,54 @@ import React, { useEffect } from 'react';
 import L from 'leaflet';
 import { useMap } from 'react-leaflet';
 import { msgData } from '../../types';
-import { LocationImpactMapProps } from './locationImpactMap';
+import { InspectedUuid, LocationImpactMapProps } from './locationImpactMap';
 
-interface BoundsUpdatedProps extends LocationImpactMapProps {
-  inspectedUuid: string | null;
+interface BoundsUpdaterProps extends LocationImpactMapProps {
+  inspectedUuid: InspectedUuid | null;
 }
 
-const BoundsUpdater: React.FC<BoundsUpdatedProps> = ({ data, inspectedUuid }) => {
-  console.log(data)
-
-  const hetData: msgData["data"] = JSON.parse(data[0].data)
-
+const BoundsUpdater: React.FC<BoundsUpdaterProps> = ({ data, inspectedUuid }) => {
   const map = useMap();
-
+  // console.log(data)
+  // console.log(JSON.stringify(inspectedUuid, null, 2))
   useEffect(() => {
-    // this useEffect checks over the provided datapoints and creates bounds where within all msg points are visible. 
-    // if the inspectedUuid is provided, it will also create bounds around inspectedUuid and hetDatapoints
-    let bounds: L.LatLngBounds
+    if (data.length === 0) return;
 
-    if (data.length > 0) {
-      if (inspectedUuid) {
-        bounds = hetData.reduce((acc: L.LatLngBounds, point: any) => {
-          return acc
-            .extend([point.lat, point.lng])
-        }, L.latLngBounds([]));
-        map.fitBounds(bounds);
-      } else {
-        bounds = data.reduce((acc: L.LatLngBounds, msg: msgData) => {
-          // @ts-expect-error types are correct, but only after parse
-          const heteroGeo = JSON.parse(msg.heterogenous_geo);
-          // @ts-expect-error types are correct, but only after parse
-          const msgGeo = JSON.parse(msg.msg_geo);
-          return acc
-            .extend([heteroGeo.lat, heteroGeo.lng])
-            .extend([msgGeo.lat, msgGeo.lng]);
-        }, L.latLngBounds([]));
-        map.fitBounds(bounds);
-      }
+    let bounds: L.LatLngBounds = L.latLngBounds([]);
+
+    if (inspectedUuid) {
+      // If we have an inspected UUID, focus on its data
+      const inspectedData = JSON.parse(inspectedUuid.msgData.data);
+      bounds = inspectedData.reduce((acc: L.LatLngBounds, point: any) => {
+        if (point.lat && point.lng) {
+          return acc.extend([point.lat, point.lng]);
+        }
+        return acc;
+      }, bounds);
+
+      // Also include the heterogeneous and message geo points for the inspected message
+      const heteroGeo = JSON.parse(inspectedUuid.msgData.heterogenous_geo);
+      const msgGeo = JSON.parse(inspectedUuid.msgData.msg_geo);
+      bounds.extend([heteroGeo.lat, heteroGeo.lng])
+        .extend([msgGeo.lat, msgGeo.lng]);
+    } else {
+      // If no UUID is inspected, show bounds for all data points
+      bounds = data.reduce((acc: L.LatLngBounds, msg: msgData) => {
+        const heteroGeo = JSON.parse(msg.heterogenous_geo);
+        const msgGeo = JSON.parse(msg.msg_geo);
+        return acc
+          .extend([heteroGeo.lat, heteroGeo.lng])
+          .extend([msgGeo.lat, msgGeo.lng]);
+      }, bounds);
     }
-  }, [map, data]);
+
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    } else {
+      // If bounds are not valid, set a default view
+      map.setView([0, 0], 2);
+    }
+  }, [map, data, inspectedUuid]);
 
   return null;
 };

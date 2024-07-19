@@ -28,7 +28,7 @@ const unusedwifiIcon = createIcon('red', 'wifi');
 const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
   let hetData: msgData["data"];
   try {
-    console.log(typeof msg.data)
+    // @ts-expect-error type parsing...
     hetData = JSON.parse(msg.data);
   } catch (error) {
     console.error('Failed to parse data:', error);
