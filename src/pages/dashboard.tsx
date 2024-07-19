@@ -83,7 +83,7 @@ export default function Dashboard() {
           <input
             type="text"
             name="imei"
-            value={imei}
+            value={imei || ''}
             onChange={handleImeiChange}
             placeholder={params.get("imei") ? params.get("imei") : "Enter device imei..."}
             className="border rounded p-1 mr-2"

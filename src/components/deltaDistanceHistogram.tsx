@@ -44,7 +44,7 @@ const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number
   );
 };
 
-const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ data, imei }) => {
+const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }> = ({ data, imei }) => {
   console.log("data fetched", data, imei)
 
   const [binWidth, setBinWidth] = useState(1);
