@@ -12,7 +12,7 @@ export default function Root() {
       </div>
       <div className="flex flex-col flex-1 overflow-hidden">
         <header className="bg-gray-100 p-2 border-b">
-          <h1 className="text-2xl font-bold">Heterogenous Location Analyzer</h1>
+          <h1 className="text-2xl font-bold">Anomaly Detection and Prevention</h1>
         </header>
         <main className="flex-1 p-2 overflow-hidden">
           <div className="h-full border-2 rounded-md border-black overflow-auto p-2">
