@@ -1,4 +1,4 @@
-export function Modal({ binData, onClose, handleSendToMap }) {
+const Modal = ({ binData, onClose, handleSendToMap }: { binData: any, onClose: () => void, handleSendToMap: () => void }) => {
   console.log(binData);
   return (
     <div className="fixed z-10 inset-0 overflow-y-auto">
