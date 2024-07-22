@@ -44,7 +44,6 @@ export const loader = async ({ request }: { request: Request }) => {
   return defer({ data: dataPromise });
 };
 
-
 export default function Dashboard() {
   const { data } = useLoaderData() as { data: Promise<msgData[]> };
   const navigate = useNavigate();
@@ -132,7 +131,7 @@ export default function Dashboard() {
             resolvedDataRef.current = resolvedData
 
             // Render the component as before
-            return <DeltaDistanceHistogram data={resolvedData} imei={imei} />
+            return <DeltaDistanceHistogram filteredDataRef={resolvedDataRef} data={resolvedData} imei={imei} />
           }}
         </Await>
       </Suspense>

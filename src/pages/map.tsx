@@ -1,7 +1,6 @@
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import LocationImpactMap from '../components/map/locationImpactMap';
 
-
 export default function Map() {
   const location = useLocation();
   // const data = useLoaderData();

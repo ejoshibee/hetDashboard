@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, MutableRefObject } from 'react';
 import {
   BarChart,
   Bar,
@@ -12,6 +12,7 @@ import { msgData } from '../types';
 import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
 import { handleSendToMap } from '../lib/navHelpers';
+
 type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number; gsmCont: number; wifiCont: number; gpsCont: number; items: msgData[] };
 
 const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number } }) => {
@@ -45,7 +46,7 @@ const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number
   );
 };
 
-const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }> = ({ data, imei }) => {
+const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, filteredDataRef: MutableRefObject<msgData[] | null> }> = ({ data, imei, filteredDataRef }) => {
   const [binWidth, setBinWidth] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
@@ -55,8 +56,6 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
   const navigate = useNavigate()
 
   const binData = useMemo(() => {
-    console.log("building chart")
-
     const bins: Bin[] = [];
     let totalCount = 0;
 
@@ -70,6 +69,8 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
       })
       : data;
 
+    // set the filteredData as data for filteredDataRef from dashboard
+    filteredDataRef.current = filteredData
 
     for (const item of filteredData) {
       const km = item.delta_distance / 1000;
@@ -123,7 +124,6 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
 
     const usefulBins = bins.filter((bin) => bin !== undefined);
 
-    console.log("Histogram built");
     setIsBuilding(false);
 
     return { bins: usefulBins, totalCount };
@@ -163,7 +163,6 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
-    console.log(payload[0])
     if (active && payload && payload.length) {
       const count = payload[0].value;
       const percentage = ((count / binData.totalCount) * 100).toFixed(4);

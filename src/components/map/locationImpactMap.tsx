@@ -27,7 +27,6 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
 
   // Updated to accept a color parameter and dynamically set the iconUrl based on type
   const getIcon = useCallback((type: string) => {
-    console.log(`type: ${type}`)
     let iconColorUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'; // default red
     if (type === 'gps') {
       iconColorUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png';
