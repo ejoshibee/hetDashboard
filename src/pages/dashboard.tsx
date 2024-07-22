@@ -77,8 +77,8 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col h-screen">
-      <div className="sticky top-0 bg-white z-10 p-4 shadow-md">
-        <div className="mb-4 flex items-center">
+      <div className="sticky top-0 bg-white z-10 p-2 shadow-md">
+        <div className="mb-2 flex items-center">
           <Form method="get" action="/dashboard">
             <label className="mr-2 font-lg font-semibold">IMEI:</label>
             <input

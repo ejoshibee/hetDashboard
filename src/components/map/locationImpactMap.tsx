@@ -22,7 +22,14 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
   const mapRef = useRef<L.Map | null>(null);
 
   const uniqueMsgUuids = useMemo(() => {
-    return Array.from(new Set(data.map(msg => JSON.parse(msg.msg_geo).msg_source)));
+    return Array.from(new Set(data.map(msg => {
+      if (msg.msg_geo !== null) {
+        const msgGeo = JSON.parse(msg.msg_geo);
+        if (msgGeo.msg_source !== null) {
+          return msgGeo.msg_source;
+        }
+      }
+    })));
   }, [data]);
 
   // Updated to accept a color parameter and dynamically set the iconUrl based on type
