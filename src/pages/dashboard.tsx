@@ -13,14 +13,14 @@ import {
   useSearchParams
 } from "react-router-dom"
 
+import DeltaDistanceHistogram from "../components/deltaDistanceHistogram";
 import { handleSendToMap } from '../lib/navHelpers';
 
-import DeltaDistanceHistogram from "../components/deltaDistanceHistogram";
+import { msgData } from "../types";
 
 import DatePicker from "react-datepicker";
-
-import { msgData } from "../types";
 import "react-datepicker/dist/react-datepicker.css";
+
 
 export const loader = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);
@@ -86,7 +86,7 @@ export default function Dashboard() {
             name="imei"
             value={imei || ''}
             onChange={handleImeiChange}
-            placeholder={params.get("imei") ? params.get("imei") : "Enter device imei..."}
+            placeholder={imei ? imei : "Enter device imei..."}
             className="border rounded p-1 mr-2"
           />
           <input
@@ -101,8 +101,8 @@ export default function Dashboard() {
           />
           <DatePicker
             selectsRange={true}
-            startDate={startDate ? new Date(startDate * 1000) : null}
-            endDate={endDate ? new Date(endDate * 1000) : null}
+            startDate={startDate ? new Date(startDate * 1000) : undefined}
+            endDate={endDate ? new Date(endDate * 1000) : undefined}
             onChange={handleDateChange}
             isClearable={true}
             placeholderText="Select date range"
