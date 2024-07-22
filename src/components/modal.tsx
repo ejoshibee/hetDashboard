@@ -24,7 +24,7 @@ const Modal = ({ binData, onClose, handleSendToMap }: { binData: any, onClose: (
                 <div className="mt-2 overflow-y-auto max-h-96">
                   {binData.items.sort((a, b) => b.delta_distance - a.delta_distance).map((item, index) => (
                     <div key={index} className="border-b border-gray-200 py-4">
-                      <h4 className="text-md font-medium text-gray-900">Message {index + 1}</h4>
+                      <h4 className="text-md font-medium text-gray-900">{item.msg_uuid}</h4>
                       <div className="mt-2 text-gray-500">
                         <p>IMEI: {item.bee_imei}</p>
                         <p>Created Date: {new Date(item.created_date).toLocaleString()}</p>
