@@ -225,7 +225,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
                 onChange={(e) => setShowHetOnly(e.target.checked)}
                 className="mr-2"
               />
-              Show Heterogeneous Lookup Only
+              Show HeteroLookup Only
             </label>
           </div>
         </div>

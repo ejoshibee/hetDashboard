@@ -25,14 +25,27 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
     return Array.from(new Set(data.map(msg => JSON.parse(msg.msg_geo).msg_source)));
   }, [data]);
 
-  const redIcon = useMemo(() => new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  }), []);
+  // Updated to accept a color parameter and dynamically set the iconUrl based on type
+  const getIcon = useCallback((type: string) => {
+    console.log(`type: ${type}`)
+    let iconColorUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'; // default red
+    if (type === 'gps') {
+      iconColorUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png';
+    } else if (type === 'wifi') {
+      iconColorUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png'; // Change to your yellow icon URL
+    } else if (type === 'gsm') {
+      iconColorUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png'; // Change to your green icon URL
+    }
+
+    return new L.Icon({
+      iconUrl: iconColorUrl,
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+  }, []);
 
   const handleMarkerClick = useCallback((uuid: string, msg: msgData) => {
     setInspectedUuid(prevInspected =>
@@ -41,6 +54,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
   }, []);
 
   const renderMarkers = useCallback((msg: msgData) => {
+
     const heteroGeo = JSON.parse(msg.heterogenous_geo);
     const msgGeo = JSON.parse(msg.msg_geo);
 
@@ -53,9 +67,9 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
       <React.Fragment key={`group-${uuid}`}>
         <Marker
           position={heteroPosition}
-          icon={redIcon}
+          icon={getIcon('hetero')}
           eventHandlers={{ click: () => handleMarkerClick(uuid, msg) }}
-          zIndexOffset={1000}
+        // zIndexOffset={1000}
         >
           <Tooltip>
             <div>
@@ -74,6 +88,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
         <Marker
           position={msgGeoPosition}
           eventHandlers={{ click: () => handleMarkerClick(uuid, msg) }}
+          icon={getIcon(msgGeo.tech)}
         >
           <Tooltip>
             <div>
@@ -81,6 +96,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
               <p>Tech: {msgGeo.tech.toUpperCase()}</p>
               <p>Imei: {msg.bee_imei}</p>
               <p>Msg_uuid: {msgGeo.msg_source}</p>
+              <p>Delta Distance: {msg.delta_distance}m</p>
               <p>Date: {msg.created_date}</p>
               <p>Location: [lat: {msgGeo.lat}, lng: {msgGeo.lng}]</p>
               <p>Reported Accuracy: {msgGeo.reported_accuracy}m</p>
@@ -94,7 +110,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
         )}
       </React.Fragment>
     );
-  }, [redIcon, handleMarkerClick, inspectedUuid]);
+  }, [getIcon, handleMarkerClick, inspectedUuid]);
 
   const filteredData = useMemo(() => {
     if (inspectedUuid) {
@@ -140,6 +156,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
     return null;
   };
 
+  // func to render all markers from constructured filteredData
   const renderAllMarkers = () => {
     console.time("Render All Markers");
     const markers = filteredData.map(renderMarkers);
