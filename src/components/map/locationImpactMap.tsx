@@ -165,11 +165,14 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 bg-white shadow-md z-10">
+      <div className="p-4 flex bg-white shadow-md z-10">
         <MsgUuidSelector
           options={uniqueMsgUuids}
           onChange={setSelectedUuids}
         />
+        <div className='w-1/2 p-2 ml-4 border border-gray-300 rounded-md'>
+          <h1>Tool Box Component</h1>
+        </div>
       </div>
       <div className="flex-grow relative">
         <MapContainer

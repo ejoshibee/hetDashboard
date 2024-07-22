@@ -18,17 +18,23 @@ export default function Map() {
   console.log(mapData)
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">{bin ? `Map view for bin ${bin}` : `No bin selected. Viewing imei: ${imei}`}</h1>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold my-2 py-2 px-4 rounded"
-          onClick={handleNavClick}>
-          View on dashboard
-        </button>
-      </div>
-      <div className='flex-1 overflow-hidden'>
-        <LocationImpactMap data={mapData} />
-      </div>
-    </div>
+    <>
+      {mapData ? (
+        <div className="flex flex-col h-full">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold">{bin ? `Map view for bin ${bin}` : `No bin selected. Viewing imei: ${imei}`}</h1>
+            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold my-2 py-2 px-4 rounded"
+              onClick={handleNavClick}>
+              View on dashboard
+            </button>
+          </div>
+          <div className='flex-1 overflow-hidden'>
+            <LocationImpactMap data={mapData} />
+          </div>
+        </div>
+      ) : (
+        <div>No data. Visit dashboard to fetch data</div>
+      )}
+    </>
   );
 }

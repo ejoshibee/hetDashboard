@@ -30,7 +30,7 @@ const MsgUuidSelector: React.FC<MsgUuidSelectorProps> = ({ options, onChange }) 
   }, [selectedUuids, onChange]);
 
   return (
-    <div className="relative z-50">
+    <div className="relative z-50 w-1/2">
       <div className="relative">
         <input
           type="text"
