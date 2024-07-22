@@ -45,8 +45,6 @@ const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number
 };
 
 const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }> = ({ data, imei }) => {
-  console.log("data fetched", data, imei)
-
   const [binWidth, setBinWidth] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
@@ -63,11 +61,13 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
 
     const filteredData = showHetOnly
       ? data.filter(item => {
-        return item.msg_geo !== null
-          && Object.prototype.hasOwnProperty.call(item.msg_geo, "heterogenousLookup")
-          && (item.msg_geo).heterogenousLookup === true
+        const msgGeo = JSON.parse(item.msg_geo)
+        return msgGeo !== null
+          && Object.prototype.hasOwnProperty.call(msgGeo, "heterogenousLookup")
+          && msgGeo.heterogenousLookup === true
       })
       : data;
+    console.log(filteredData)
 
     for (const item of filteredData) {
       const km = item.delta_distance / 1000;
