@@ -13,6 +13,8 @@ import {
   useSearchParams
 } from "react-router-dom"
 
+import { handleSendToMap } from '../lib/navHelpers';
+
 import DeltaDistanceHistogram from "../components/deltaDistanceHistogram";
 
 import DatePicker from "react-datepicker";
@@ -65,14 +67,13 @@ export default function Dashboard() {
     ]);
   };
 
-  const handleSendToMap = () => {
-    if (!imei) {
-      alert("Please select an imei to view")
-      return
-    }
-    console.log(resolvedDataRef.current)
-    localStorage.setItem(`map-data-${imei}`, JSON.stringify(resolvedDataRef.current))
-    navigate(`/map?imei=${imei}`);
+  // Dashboard send to map
+  const dashboardSendToMap = () => {
+    handleSendToMap({
+      navigate,
+      data: resolvedDataRef.current,
+      imei: imei
+    });
   };
 
   return (
@@ -115,7 +116,7 @@ export default function Dashboard() {
           </button>
         </Form>
         <button
-          onClick={handleSendToMap}
+          onClick={dashboardSendToMap}
           className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
         >
           Send to Map

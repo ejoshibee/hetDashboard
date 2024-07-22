@@ -11,6 +11,7 @@ import {
 import { msgData } from '../types';
 import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
+import { handleSendToMap } from '../lib/navHelpers';
 type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number; gsmCont: number; wifiCont: number; gpsCont: number; items: msgData[] };
 
 const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number } }) => {
@@ -59,6 +60,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
     const bins: Bin[] = [];
     let totalCount = 0;
 
+    // filter by msgGeo.heteroLookup if showHetOnly is true
     const filteredData = showHetOnly
       ? data.filter(item => {
         const msgGeo = JSON.parse(item.msg_geo)
@@ -67,7 +69,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
           && msgGeo.heterogenousLookup === true
       })
       : data;
-    console.log(filteredData)
+
 
     for (const item of filteredData) {
       const km = item.delta_distance / 1000;
@@ -143,13 +145,15 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
     setShowModal(true);
   };
 
-  const handleSendToMap = () => {
+  // Modal sendToMap
+  const modalSentToMap = () => {
     if (selectedBin) {
-      localStorage.setItem('map-data', JSON.stringify(selectedBin.items));
-      if (imei) {
-        localStorage.setItem(`map-data-${imei}`, JSON.stringify(selectedBin.items))
-      }
-      navigate(`/map?bin=${encodeURIComponent(selectedBin.bin)}&imei=${imei ? imei : ''}`);
+      handleSendToMap({
+        navigate,
+        data: selectedBin.items,
+        imei: imei,
+        binLabel: selectedBin.bin
+      });
     }
   };
 
@@ -184,10 +188,11 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
     return null;
   };
 
+  // suppress recharts X and Y axis errors
   useEffect(() => {
     const originalConsoleError = console.error;
 
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       if (typeof args[0] === "string" && /defaultProps/.test(args[0])) {
         return;
       }
@@ -251,7 +256,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null }>
         </ResponsiveContainer>
       </div>
       {showModal && selectedBin && (
-        <Modal binData={selectedBin} onClose={handleModalClose} handleSendToMap={handleSendToMap} />
+        <Modal binData={selectedBin} onClose={handleModalClose} handleSendToMap={modalSentToMap} />
       )}
     </div>
   );

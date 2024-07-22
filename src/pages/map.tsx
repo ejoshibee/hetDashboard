@@ -1,43 +1,22 @@
-import { Suspense } from 'react';
-import { defer, Await, useLoaderData, useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import LocationImpactMap from '../components/map/locationImpactMap';
 
-export const loader = async ({ request }: { request: Request }) => {
-  const url = new URL(request.url);
-  const bin = url.searchParams.get('bin');
-
-  const imei = url.searchParams.get('imei')
-  console.log(`imei: ${imei}`)
-
-  if (!bin && !imei) {
-    return defer({ success: false, error: "No bin or imei provided" });
-  }
-
-  let mapData = localStorage.getItem('map-data')
-  if (localStorage.getItem(`map-data-${imei}`)) {
-    mapData = localStorage.getItem(`map-data-${imei}`);
-  }
-
-  if (!mapData) {
-    return defer({ success: false, error: "No data found for this bin" });
-  }
-
-  console.log(`mapData found for bin ${bin}`);
-  return defer({ success: true, data: JSON.parse(mapData) });
-};
 
 export default function Map() {
-  const data = useLoaderData();
+  const location = useLocation();
+  // const data = useLoaderData();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const bin = searchParams.get('bin');
-  const imei = searchParams.get('imei')
+  const imei = searchParams.get('imei');
 
   const handleNavClick = () => {
-    // console.log(imei)
-    navigate(`/dashboard?imei=${imei ? imei : ""}`)
-  }
+    navigate(`/dashboard?imei=${imei ? imei : ""}`);
+  };
 
+  // Accessing state passed via navigate
+  const mapData = location.state?.mapData;
+  console.log(mapData)
 
   return (
     <div className="flex flex-col h-full">
@@ -49,20 +28,7 @@ export default function Map() {
         </button>
       </div>
       <div className='flex-1 overflow-hidden'>
-        <Suspense fallback={<div>Loading map data...</div>}>
-          <Await
-            resolve={data}
-            errorElement={<div>Error loading map data</div>}
-          >
-            {(resolvedData) =>
-              resolvedData.success ? (
-                <LocationImpactMap data={resolvedData.data} />
-              ) : (
-                <div className="text-red-500">{resolvedData.error}</div>
-              )
-            }
-          </Await>
-        </Suspense>
+        <LocationImpactMap data={mapData} />
       </div>
     </div>
   );

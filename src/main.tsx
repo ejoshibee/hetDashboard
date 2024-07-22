@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 
 import Dashboard, { loader as dashLoader } from './pages/dashboard'
-import Map, { loader as mapLoader } from './pages/map'
+import Map from './pages/map'
 import Root from './pages/root'
 import Index from './pages/index'
 import ErrorPage from './pages/error'
@@ -29,7 +29,6 @@ const router = createBrowserRouter([
       {
         path: 'map',
         element: <Map />,
-        loader: mapLoader
       }
     ],
   },
