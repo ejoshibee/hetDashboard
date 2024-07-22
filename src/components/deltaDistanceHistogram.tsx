@@ -204,15 +204,14 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
     };
   }, []);
 
-  // render a loading state while we compute the bindata for histogram
   if (isBuilding) {
     return <div className="text-gray-500 font-semibold">Building histogram...</div>;
   }
 
   return (
-    <div className="relative">
+    <div className="mb-8">
       <div className="mb-6 flex flex-col md:flex-row justify-between">
-        <div className="h-full flex flex-col justify-center">
+        <div className="h-full flex flex-col justify-center mb-4 md:mb-0">
           <h2 className="text-2xl font-bold mb-2">Delta Distance Histogram</h2>
           <div className="flex items-center">
             <label className="mr-2">Bin Width (km):</label>

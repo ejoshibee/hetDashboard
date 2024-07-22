@@ -76,65 +76,67 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="">
-      <div className="mb-4 flex items-center">
-        <Form method="get" action="/dashboard">
-          <label className="mr-2 font-lg font-semibold">IMEI:</label>
-          <input
-            type="text"
-            name="imei"
-            value={imei || ''}
-            onChange={handleImeiChange}
-            placeholder={imei ? imei : "Enter device imei..."}
-            className="border rounded p-1 mr-2"
-          />
-          <input
-            type="hidden"
-            name="startDate"
-            value={startDate || ''}
-          />
-          <input
-            type="hidden"
-            name="endDate"
-            value={endDate || ''}
-          />
-          <DatePicker
-            selectsRange={true}
-            startDate={startDate ? new Date(startDate * 1000) : undefined}
-            endDate={endDate ? new Date(endDate * 1000) : undefined}
-            onChange={handleDateChange}
-            isClearable={true}
-            placeholderText="Select date range"
-            className="border rounded p-1 mr-2"
-          />
+    <div className="flex flex-col h-screen">
+      <div className="sticky top-0 bg-white z-10 p-4 shadow-md">
+        <div className="mb-4 flex items-center">
+          <Form method="get" action="/dashboard">
+            <label className="mr-2 font-lg font-semibold">IMEI:</label>
+            <input
+              type="text"
+              name="imei"
+              value={imei || ''}
+              onChange={handleImeiChange}
+              placeholder={imei ? imei : "Enter device imei..."}
+              className="border rounded p-1 mr-2"
+            />
+            <input
+              type="hidden"
+              name="startDate"
+              value={startDate || ''}
+            />
+            <input
+              type="hidden"
+              name="endDate"
+              value={endDate || ''}
+            />
+            <DatePicker
+              selectsRange={true}
+              startDate={startDate ? new Date(startDate * 1000) : undefined}
+              endDate={endDate ? new Date(endDate * 1000) : undefined}
+              onChange={handleDateChange}
+              isClearable={true}
+              placeholderText="Select date range"
+              className="border rounded p-1 mr-2"
+            />
+            <button
+              type="submit"
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
+            >
+              View Data
+            </button>
+          </Form>
           <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
+            onClick={dashboardSendToMap}
+            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
           >
-            View Data
+            Send to Map
           </button>
-        </Form>
-        <button
-          onClick={dashboardSendToMap}
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-        >
-          Send to Map
-        </button>
+        </div>
       </div>
-      <Suspense fallback={<div className="text-gray-500 font-semibold">Loading...</div>}>
-        <Await
-          resolve={data}
-          errorElement={<div>Error loading data</div>}
-        >
-          {(resolvedData: msgData[]) => {
-            // Update the state with resolved data
-            resolvedDataRef.current = resolvedData
-
-            // Render the component as before
-            return <DeltaDistanceHistogram filteredDataRef={resolvedDataRef} data={resolvedData} imei={imei} />
-          }}
-        </Await>
-      </Suspense>
+      <div className="flex-grow overflow-y-auto p-4">
+        <Suspense fallback={<div className="text-gray-500 font-semibold">Loading...</div>}>
+          <Await
+            resolve={data}
+            errorElement={<div>Error loading data</div>}
+          >
+            {(resolvedData: msgData[]) => {
+              resolvedDataRef.current = resolvedData;
+              return <DeltaDistanceHistogram filteredDataRef={resolvedDataRef} data={resolvedData} imei={imei} />;
+            }}
+          </Await>
+        </Suspense>
+        {/* Add more statistical analysis components here */}
+      </div>
     </div>
   );
 }
