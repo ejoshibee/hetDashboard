@@ -37,6 +37,7 @@ const BoundsUpdater: React.FC<BoundsUpdaterProps> = ({ data, inspectedUuid }) =>
       bounds = data.reduce((acc: L.LatLngBounds, msg: msgData) => {
         const heteroGeo = JSON.parse(msg.heterogenous_geo);
         const msgGeo = JSON.parse(msg.msg_geo);
+        if (msgGeo === null || msgGeo === undefined) return acc
         return acc
           .extend([heteroGeo.lat, heteroGeo.lng])
           .extend([msgGeo.lat, msgGeo.lng]);

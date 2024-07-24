@@ -65,6 +65,8 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
     const msgGeo = JSON.parse(msg.msg_geo);
 
     const heteroPosition: L.LatLngExpression = [heteroGeo.lat, heteroGeo.lng];
+    console.log(msgGeo)
+    if (msgGeo === null) return
     const msgGeoPosition: L.LatLngExpression = [msgGeo.lat, msgGeo.lng];
 
     const uuid = msgGeo.msg_source;
@@ -120,10 +122,18 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
 
   const filteredData = useMemo(() => {
     if (inspectedUuid) {
-      return data.filter(msg => JSON.parse(msg.msg_geo).msg_source === inspectedUuid.uuid);
+      return data.filter(msg => {
+        const msgGeo = JSON.parse(msg.msg_geo);
+        if (msgGeo === null || msgGeo === undefined) return
+        return msgGeo.msg_source === inspectedUuid.uuid;
+      });
     }
     if (selectedUuids.length === 0) return data;
-    return data.filter(msg => selectedUuids.includes(JSON.parse(msg.msg_geo).msg_source));
+    return data.filter(msg => {
+      const msgGeo = JSON.parse(msg.msg_geo);
+      if (msgGeo === null || msgGeo === undefined) return
+      return selectedUuids.includes(msgGeo.msg_source);
+    });
   }, [data, selectedUuids, inspectedUuid]);
 
   const PerformanceOptimizer = () => {
