@@ -102,6 +102,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
             <div>
               <h2>Message Geo</h2>
               <p>Tech: {msgGeo.tech.toUpperCase()}</p>
+              <p>IsHeT: {msgGeo.heterogenousLookup ? "true" : "false"}</p>
               <p>Imei: {msg.bee_imei}</p>
               <p>Msg_uuid: {msgGeo.msg_source}</p>
               <p>Delta Distance: {msg.delta_distance}m</p>
@@ -112,7 +113,9 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
             </div>
           </Tooltip>
         </Marker>
-        <Polyline positions={[msgGeoPosition, heteroPosition]} color="blue" />
+        <Polyline positions={[msgGeoPosition, heteroPosition]} color="blue">
+          <Tooltip>{uuid}</Tooltip>
+        </Polyline>
         {inspectedUuid?.uuid === uuid && (
           <AdditionalPoints msg={msg} />
         )}

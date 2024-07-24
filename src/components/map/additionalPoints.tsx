@@ -1,5 +1,5 @@
 import React from 'react';
-import { Marker, Popup } from 'react-leaflet';
+import { Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import { msgData } from '../../types';
 
@@ -30,6 +30,10 @@ const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
   try {
     // @ts-expect-error type parsing...
     hetData = JSON.parse(msg.data);
+    const msg_geo = JSON.parse(msg.msg_geo);
+    console.log(msg_geo);
+    const het_geo = JSON.parse(msg.heterogenous_geo);
+    console.log(het_geo);
   } catch (error) {
     console.error('Failed to parse data:', error);
     return null; // or a fallback UI
@@ -38,17 +42,31 @@ const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
   return hetData.map((d) => {
     const icon = d.type === 'wifi' ? (d.used ? wifiIcon : unusedwifiIcon) : (d.used ? gsmIcon : unusedgsmIcon);
     const key = d.type === 'wifi' ? `${d.type}-${d.mac_address}` : d.type === 'gsm' ? `${d.type}-${d.cid}` : `${d.type}}`;
-    return <Marker
-      position={[d.lat, d.lng]}
-      icon={icon}
-      key={key} >
-      <Popup>
-        <div>
-          <p>{d.type === "wifi" ? `Mac Adress: ${d.mac_address}` : d.type === "gsm" ? `CID: ${d.cid}` : d.type}</p>
-          <p>Accuracy: {d.accuracy}</p>
-        </div>
-      </Popup>
-    </Marker>;
+    const radius = d.type === 'wifi' ? 50 : 200; // Example radii, adjust as needed
+    const color = d.type === 'wifi' ? 'yellow' : 'green';
+
+    return (
+      <React.Fragment key={key}>
+        <Marker position={[d.lat, d.lng]} icon={icon}>
+          <Popup>
+            <div>
+              <p>{d.type === "wifi" ? `Mac Address: ${d.mac_address}` : d.type === "gsm" ? `CID: ${d.cid}` : d.type}</p>
+              <p>{d.type === "gsm" ? `LAC: ${d.lac}` : ""}</p>
+              <p>{d.type === "gsm" ? `MCC: ${d.mcc}` : ""}</p>
+              <p>{d.type === "gsm" ? `MNC: ${d.mnc}` : ""}</p>
+              <p>{d.type === "gsm" ? `Accuracy: ${d.accuracy}` : ""}</p>
+            </div>
+          </Popup>
+        </Marker>
+        <Circle
+          center={[d.lat, d.lng]}
+          radius={radius}
+          color={color}
+          fillColor={color}
+          fillOpacity={0.2}
+        />
+      </React.Fragment>
+    );
   });
 };
 
