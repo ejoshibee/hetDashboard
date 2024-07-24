@@ -35,6 +35,7 @@ interface MsgGeo {
   accuracy: number;
   msg_source: string;
   heterogenousLookup: boolean;
+  source?: string;
 }
 
 interface HeterogenousGeo {
