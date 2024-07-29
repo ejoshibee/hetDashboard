@@ -10,7 +10,6 @@ import {
   useLoaderData,
   useNavigate,
   Form,
-  useSearchParams
 } from "react-router-dom"
 
 import DeltaDistanceHistogram from "../components/deltaDistanceHistogram";
