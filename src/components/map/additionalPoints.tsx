@@ -30,8 +30,10 @@ const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
   try {
     // @ts-expect-error type parsing...
     hetData = JSON.parse(msg.data);
+    // @ts-expect-error type parsing...
     const msg_geo = JSON.parse(msg.msg_geo);
     console.log(msg_geo);
+    // @ts-expect-error type parsing...
     const het_geo = JSON.parse(msg.heterogenous_geo);
     console.log(het_geo);
   } catch (error) {
@@ -42,7 +44,7 @@ const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
   return hetData.map((d) => {
     const icon = d.type === 'wifi' ? (d.used ? wifiIcon : unusedwifiIcon) : (d.used ? gsmIcon : unusedgsmIcon);
     const key = d.type === 'wifi' ? `${d.type}-${d.mac_address}` : d.type === 'gsm' ? `${d.type}-${d.cid}` : `${d.type}}`;
-    const radius = d.type === 'wifi' ? 50 : 200; // Example radii, adjust as needed
+    const radius = d.type === 'wifi' ? 500 : 1500; // Meters 
     const color = d.type === 'wifi' ? 'yellow' : 'green';
 
     return (

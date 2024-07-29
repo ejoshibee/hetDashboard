@@ -11,7 +11,6 @@ const MsgUuidSelector: React.FC<MsgUuidSelectorProps> = ({ options, onChange }) 
 
   const filteredOptions = useMemo(() => {
     return options.filter(option => {
-      console.log(`option: ${option}`)
       if (option === undefined) return
       return option.toLowerCase().includes(inputValue.toLowerCase()) &&
         !selectedUuids.includes(option)
