@@ -201,15 +201,15 @@ app.get('/heterogenous_lookup/imei/:imei', async (c) => {
 				heterogenous_geo_distance: JSON.parse(row.heterogenous_geo_distance)
 			}
 
-			function unixToIST(unixTime) {
-				const istOffset = 5.5;
-				const istDate = new Date(unixTime * 1000);
-				istDate.setHours(istDate.getHours() + istOffset);
-				istDate.setMinutes(istDate.getMinutes() + (istOffset % 1) * 60);
-				return istDate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
-			}
+			// function unixToIST(unixTime) {
+			// 	const istOffset = 5.5;
+			// 	const istDate = new Date(unixTime * 1000);
+			// 	istDate.setHours(istDate.getHours() + istOffset);
+			// 	istDate.setMinutes(istDate.getMinutes() + (istOffset % 1) * 60);
+			// 	return istDate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+			// }
 
-			const formattedDate = unixToIST(row.created_date);
+			// const formattedDate = unixToIST(row.created_date);
 
 			// Only perform analysis if heterogenousLookup is true
 			row.status = 'good';
