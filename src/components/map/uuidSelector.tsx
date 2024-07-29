@@ -31,6 +31,13 @@ const MsgUuidSelector: React.FC<MsgUuidSelectorProps> = ({ options, onChange }) 
     onChange(newSelected);
   }, [selectedUuids, onChange]);
 
+  const handleEnterKey = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      // make fetch request to get data for uuid
+      console.log("enter pressed. doing something")
+    }
+  }, [inputValue, handleSelect]);
+
   return (
     <div className="relative z-50 w-1/2">
       <div className="relative">
@@ -38,6 +45,7 @@ const MsgUuidSelector: React.FC<MsgUuidSelectorProps> = ({ options, onChange }) 
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleEnterKey}
           placeholder="Type to search UUIDs"
           className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
