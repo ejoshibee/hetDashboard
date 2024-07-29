@@ -84,7 +84,7 @@ app.get('/heterogenous_lookup', async (c) => {
     console.log(`Number of rows fetched: ${rows.length}`);
 
     return c.json({
-      message: 'Data fetched successfully',
+      message: 'Messages fetched successfully',
       data: rows
     });
 
@@ -94,18 +94,22 @@ app.get('/heterogenous_lookup', async (c) => {
   }
 });
 
-// Get a single record by ID
-app.get('/heterogenous_lookup/:id', async (c) => {
-	const id = c.req.param('id');
-	const connection = await pool.getConnection();
+// Get a single record by message uuid
+app.get('/heterogenous_lookup/:uuid', async (c) => {
+	const uuid = c.req.param('uuid');
+	console.log(`UUID from request params: ${uuid}`)
 	try {
-		const [rows] = await connection.query('SELECT * FROM heterogenous_lookup WHERE id = ?', [id]);
+		const rows = await query('SELECT * FROM new_het_lookup WHERE msg_uuid = ?', [uuid]);
 		if (rows.length === 0) {
-			return c.json({ message: 'Record not found' }, 404);
+			return c.json({ message: 'Message not found' }, 404);
 		}
-		return c.json(rows[0]);
-	} finally {
-		connection.release();
+		return c.json({
+			message: 'Message fetched successfully',
+			data: rows
+		});
+	} catch (err) {
+		console.error('Error in heterogenous_lookup:', err);
+		return c.json({ error: 'Internal server error', details: err.message }, 500);
 	}
 });
 

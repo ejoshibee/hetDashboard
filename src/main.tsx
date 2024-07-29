@@ -3,13 +3,12 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 
 import Dashboard, { loader as dashLoader } from './pages/dashboard'
-import Map from './pages/map'
+import Map, { loader as mapLoader } from './pages/map'
 import Root from './pages/root'
 import Index from './pages/index'
 import ErrorPage from './pages/error'
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-
 
 const router = createBrowserRouter([
   {
@@ -24,11 +23,13 @@ const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <Dashboard />,
-        loader: dashLoader
+        loader: dashLoader,
+        errorElement: <ErrorPage />,
       },
       {
-        path: 'map',
+        path: 'map/:uuid?',
         element: <Map />,
+        loader: mapLoader
       }
     ],
   },

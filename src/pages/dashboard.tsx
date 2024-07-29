@@ -12,6 +12,7 @@ import {
   Form,
 } from "react-router-dom"
 
+import ErrorPage from './error';
 import DeltaDistanceHistogram from "../components/deltaDistanceHistogram";
 import { handleSendToMap } from '../lib/navHelpers';
 
@@ -27,7 +28,7 @@ export const loader = async ({ request }: { request: Request }) => {
   const startDate = url.searchParams.get('startDate');
   const endDate = url.searchParams.get('endDate');
 
-  let apiUrl = `http://localhost:3007/heterogenous_lookup`;
+  let apiUrl = `/api/heterogenous_lookup`;
 
   // Use the same logic for default dates as in the component
   const twoWeeksAgo = Math.floor((Date.now() - 14 * 24 * 60 * 60 * 1000) / 1000);
@@ -44,8 +45,11 @@ export const loader = async ({ request }: { request: Request }) => {
   }
 
   const dataPromise = fetch(apiUrl).then(async (resp) => {
-    if (resp.status !== 200) {
-      throw new Error('There was an error fetching data');
+    if (resp.status === 404) {
+      console.log('No data found for the given criteria');
+      throw new Response('No data found for the given criteria', { status: 404 });
+    } else if (resp.status !== 200) {
+      throw new Response('There was an error fetching data', { status: resp.status });
     }
     const data = await resp.json();
     return data.data;
@@ -66,7 +70,6 @@ export default function Dashboard() {
     initialStartDate: number | null;
     initialEndDate: string | null;
   };
-  console.log(`initialImei: ${initialImei}, initialStartDate: ${initialStartDate}, initialEndDate: ${initialEndDate}`);
   const navigate = useNavigate();
 
   const [imei, setImei] = useState(initialImei);
@@ -150,7 +153,7 @@ export default function Dashboard() {
         <Suspense fallback={<div className="text-gray-500 font-semibold">Loading...</div>}>
           <Await
             resolve={data}
-            errorElement={<div>Error loading data</div>}
+            errorElement={<ErrorPage />}
           >
             {(resolvedData: msgData[]) => {
               resolvedDataRef.current = resolvedData;
