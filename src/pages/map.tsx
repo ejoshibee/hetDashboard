@@ -62,7 +62,7 @@ export default function Map() {
             errorElement={<div>Error loading map data</div>}
           >
             {(resolvedData: msgData[]) => {
-              const navState = location.state.mapData
+              const navState = location.state?.mapData
               console.log(`Data from navstate: ${navState}`)
               if (navState) {
                 return (
