@@ -29,9 +29,20 @@ export const loader = async ({ request }: { request: Request }) => {
   const endDate = url.searchParams.get('endDate');
 
   let apiUrl = `http://localhost:3007/heterogenous_lookup`;
-  if (imei) apiUrl += `?imei=${imei}`;
-  if (startDate) apiUrl += `${imei ? '&' : '?'}startDate=${startDate}`;
-  if (endDate) apiUrl += `&endDate=${endDate}`;
+
+  // Use the same logic for default dates as in the component
+  const twoWeeksAgo = Math.floor((Date.now() - 14 * 24 * 60 * 60 * 1000) / 1000);
+  const defaultStartDate = imei ? null : twoWeeksAgo;
+  const usedStartDate = startDate || defaultStartDate;
+
+  if (imei) {
+    apiUrl += `?imei=${imei}`;
+    if (usedStartDate) apiUrl += `&startDate=${usedStartDate}`;
+    if (endDate) apiUrl += `&endDate=${endDate}`;
+  } else {
+    apiUrl += `?startDate=${usedStartDate}`;
+    if (endDate) apiUrl += `&endDate=${endDate}`;
+  }
 
   const dataPromise = fetch(apiUrl).then(async (resp) => {
     if (resp.status !== 200) {
@@ -41,17 +52,30 @@ export const loader = async ({ request }: { request: Request }) => {
     return data.data;
   });
 
-  return defer({ data: dataPromise });
+  return defer({
+    data: dataPromise,
+    initialImei: imei,
+    initialStartDate: usedStartDate,
+    initialEndDate: endDate
+  });
 };
 
 export default function Dashboard() {
-  const { data } = useLoaderData() as { data: Promise<msgData[]> };
+  const { data, initialImei, initialStartDate, initialEndDate } = useLoaderData() as {
+    data: Promise<msgData[]>;
+    initialImei: string | null;
+    initialStartDate: number | null;
+    initialEndDate: string | null;
+  };
+  console.log(`initialImei: ${initialImei}, initialStartDate: ${initialStartDate}, initialEndDate: ${initialEndDate}`);
   const navigate = useNavigate();
-  const [params] = useSearchParams();
 
-  const [imei, setImei] = useState(params.get("imei"));
+  const [imei, setImei] = useState(initialImei);
   const resolvedDataRef = useRef<msgData[] | null>(null);
-  const [dateRange, setDateRange] = useState<[number | null, number | null]>([null, null]);
+  const [dateRange, setDateRange] = useState<[number | null, number | null]>(() => [
+    initialStartDate,
+    initialEndDate ? Number(initialEndDate) : null
+  ]);
   const [startDate, endDate] = dateRange;
 
   const handleImeiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
