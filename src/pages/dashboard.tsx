@@ -97,7 +97,9 @@ export default function Dashboard() {
     handleSendToMap({
       navigate,
       data: resolvedDataRef.current,
-      imei: imei
+      imei: imei,
+      startDate: startDate,
+      endDate: endDate
     });
   };
 
