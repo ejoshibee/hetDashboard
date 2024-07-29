@@ -1,11 +1,11 @@
-interface GpsData {
+export interface GpsData {
   accuracy: number;
   lat: number;
   lng: number;
   type: 'gps';
   used?: boolean;
 }
-interface WifiData {
+export interface WifiData {
   mac_address: string;
   accuracy: number;
   lat: number;
@@ -14,7 +14,7 @@ interface WifiData {
   used?: boolean;
 }
 
-interface GsmData {
+export interface GsmData {
   cid: number;
   lac: number;
   mcc: number;
