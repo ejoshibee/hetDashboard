@@ -64,8 +64,8 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
 
   const renderMarkers = useCallback((msg: msgData) => {
 
-    const heteroGeo = JSON.parse(JSON.stringify(msg.heterogenous_geo));
-    const msgGeo = JSON.parse(JSON.stringify(msg.msg_geo));
+    const heteroGeo = JSON.parse(msg.heterogenous_geo);
+    const msgGeo = JSON.parse(msg.msg_geo);
 
     const heteroPosition: L.LatLngExpression = [heteroGeo.lat, heteroGeo.lng];
     if (msgGeo === null) return
@@ -90,8 +90,8 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
               <p>Date: {msg.created_date}</p>
               <p>Delta Distance: {msg.delta_distance}m</p>
               <p>Accuracy: {heteroGeo.accuracy}m</p>
-              <p>GSM Count: {JSON.parse(JSON.stringify(msg.data)).filter((d: WifiData | GsmData) => d.type === 'gsm').length}</p>
-              <p>WiFi Count: {JSON.parse(JSON.stringify(msg.data)).filter((d: WifiData | GsmData) => d.type === 'wifi').length}</p>
+              <p>GSM Count: {JSON.parse(msg.data).filter((d) => d.type === 'gsm').length}</p>
+              <p>WiFi Count: {JSON.parse(msg.data).filter((d) => d.type === 'wifi').length}</p>
             </div>
           </Tooltip>
         </Marker>
@@ -129,14 +129,14 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
     if (data.length === 0) return [];
     if (inspectedUuid) {
       return data.filter(msg => {
-        const msgGeo = JSON.parse(JSON.stringify(msg.msg_geo));
+        const msgGeo = JSON.parse(msg.msg_geo);
         if (msgGeo === null || msgGeo === undefined) return
         return msgGeo.msg_source === inspectedUuid.uuid;
       });
     }
     if (selectedUuids.length === 0) return data;
     return data.filter(msg => {
-      const msgGeo = JSON.parse(JSON.stringify(msg.heterogenous_geo));
+      const msgGeo = JSON.parse(msg.heterogenous_geo);
       if (msgGeo === null || msgGeo === undefined) return
       return selectedUuids.includes(msgGeo.msg_source);
     });
@@ -153,7 +153,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
         const bounds = map.getBounds();
         const zoom = map.getZoom();
         const visibleMarkers = filteredData.filter(msg => {
-          const heteroGeo = JSON.parse(JSON.stringify(msg.heterogenous_geo));
+          const heteroGeo = JSON.parse(msg.heterogenous_geo);
           return bounds.contains([heteroGeo.lat, heteroGeo.lng]);
         });
 

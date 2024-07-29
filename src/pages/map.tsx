@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import {
   useSearchParams,
   useNavigate,
@@ -6,20 +6,21 @@ import {
   defer,
   useLoaderData,
   Await,
-  LoaderFunctionArgs
+  LoaderFunctionArgs,
+  useParams
 } from 'react-router-dom';
 import LocationImpactMap from '../components/map/locationImpactMap';
 import { msgData } from '../types';
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const uuid = url.searchParams.get('uuid');
+  const uuid = params.uuid || null;
   const startDate = url.searchParams.get('startDate');
   const endDate = url.searchParams.get('endDate');
 
   console.log(`UUID: ${uuid}, Start Date: ${startDate}, End Date: ${endDate}`);
 
-  if (uuid) {
+  if (uuid !== null) {
     const dataPromise = fetch(`/api/heterogenous_lookup/${uuid}?startDate=${startDate}&endDate=${endDate}`).then(async (resp) => {
       if (resp.status === 404) {
         console.log('No data found for the given criteria');
@@ -40,10 +41,14 @@ export default function Map() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const pathParams = useParams();
+
   const bin = searchParams.get('bin');
   const imei = searchParams.get('imei');
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
+
+  const uuid = pathParams.uuid || null;
 
   const { data } = useLoaderData() as { data: Promise<msgData[] | []> };
 
@@ -57,7 +62,12 @@ export default function Map() {
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{bin ? `Map view for bin ${bin}` : `No bin selected. Viewing imei: ${imei}`}</h1>
+        <h1 className="text-2xl font-bold">
+          {bin ? `Map view for bin ${bin}` :
+            imei ? `No bin selected. Viewing imei: ${imei}` :
+              uuid ? `Viewing map for UUID: ${uuid}` : // Add condition for uuid
+                `No bin, imei, or uuid selected. Search for a message`}
+        </h1>
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold my-2 py-2 px-4 rounded"
           onClick={handleNavToDashboard}
