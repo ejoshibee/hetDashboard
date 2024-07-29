@@ -82,6 +82,9 @@ export default function Map() {
             errorElement={<div>Error loading map data</div>}
           >
             {(resolvedData: msgData[]) => {
+              // Check if we have data in location state
+              // If we do, we navigated from dashboard to map with 
+              // filtered data. return impactMap with state data
               const navState = location.state?.mapData;
               console.log(`Data from navstate: ${navState}`);
               if (navState) {
@@ -89,6 +92,9 @@ export default function Map() {
                   <LocationImpactMap data={navState} />
                 );
               }
+              // Otherwise, return the impactMap with data fetched 
+              // from loader, meaning we accessed Map via a deep link
+              // or directly to search for msg_uuids
               return (
                 <LocationImpactMap data={resolvedData} />
               );
