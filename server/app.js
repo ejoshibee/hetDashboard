@@ -1,18 +1,14 @@
 import fs from 'fs';
-import path from 'path';
+import pool from './db.js';
+import { query } from './db.js';
 
-import db from './db';
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static';
 
 
-
-
-
 const app = new Hono();
-
 
 
 app.use('*', cors({
@@ -25,7 +21,7 @@ app.use('/*', serveStatic({ root: '../statics' }))
 
 
 const buildQuery = (imei, startDate, endDate) => {
-	let query = `
+	let sql = `
     SELECT 
       *,
       JSON_EXTRACT(msg_geo, "$.heterogenousLookup") AS isHet
@@ -53,52 +49,51 @@ const buildQuery = (imei, startDate, endDate) => {
 	}
 
 	if (conditions.length > 0) {
-		query += ' WHERE ' + conditions.join(' AND ');
+		sql += ' WHERE ' + conditions.join(' AND ');
 	}
 
 
-	return { query, params };
+	return { sql, params };
 };
 
 // Get all records
 app.get('/heterogenous_lookup', async (c) => {
-	const { imei, startDate, endDate, hetOnly } = c.req.query();
-	console.log(imei, startDate, endDate, hetOnly);
-	const connection = await db.getConnection();
-	try {
-		if (endDate && !startDate) {
-			return c.json({ error: 'End date provided without start date' }, 400);
-		}
+  const { imei, startDate, endDate, hetOnly } = c.req.query();
+  console.log('Query params:', { imei, startDate, endDate, hetOnly });
 
-		let { query, params } = buildQuery(imei, startDate, endDate);
+  try {
+    if (endDate && !startDate) {
+      return c.json({ error: 'End date provided without start date' }, 400);
+    }
 
-		// If hetOnly is true, add a condition to filter for heterogeneous lookups
-		if (hetOnly === 'true') {
-			if (query.includes('WHERE')) {
-				query += ' AND JSON_EXTRACT(msg_geo, "$.heterogenousLookup") = true';
-			} else {
-				query += ' WHERE JSON_EXTRACT(msg_geo, "$.heterogenousLookup") = true';
-			}
-		}
+    let { sql, params } = buildQuery(imei, startDate, endDate);
 
-		const [rows] = await connection.query(query, params);
+    // If hetOnly is true, add a condition to filter for heterogeneous lookups
+    if (hetOnly === 'true') {
+      sql += sql.includes('WHERE')
+        ? ' AND JSON_EXTRACT(msg_geo, "$.heterogenousLookup") = true'
+        : ' WHERE JSON_EXTRACT(msg_geo, "$.heterogenousLookup") = true';
+    }
 
-		if (rows.length === 0) {
-			return c.json({ message: 'Record not found' }, 404);
-		}
-		console.log(`Length of rows from sql: ${rows}, ${rows.length}`)
+    const rows = await query(sql, params);
 
-		return c.json({
-			message: `data fetched`,
-			data: rows
-		});
-	} catch (err) {
-		console.error(err);
-		return c.json({ error: 'internal server error' }, 500);
-	} finally {
-		connection.release();
-	}
+    if (rows.length === 0) {
+      return c.json({ message: 'No records found' }, 404);
+    }
+
+    console.log(`Number of rows fetched: ${rows.length}`);
+
+    return c.json({
+      message: 'Data fetched successfully',
+      data: rows
+    });
+
+  } catch (err) {
+    console.error('Error in heterogenous_lookup:', err);
+    return c.json({ error: 'Internal server error', details: err.message }, 500);
+  }
 });
+
 // Get a single record by ID
 app.get('/heterogenous_lookup/:id', async (c) => {
 	const id = c.req.param('id');
@@ -206,6 +201,14 @@ app.get('/heterogenous_lookup/imei/:imei', async (c) => {
 				heterogenous_geo_distance: JSON.parse(row.heterogenous_geo_distance)
 			}
 
+			function unixToIST(unixTime) {
+				const istOffset = 5.5;
+				const istDate = new Date(unixTime * 1000);
+				istDate.setHours(istDate.getHours() + istOffset);
+				istDate.setMinutes(istDate.getMinutes() + (istOffset % 1) * 60);
+				return istDate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+			}
+
 			const formattedDate = unixToIST(row.created_date);
 
 			// Only perform analysis if heterogenousLookup is true
@@ -219,15 +222,7 @@ app.get('/heterogenous_lookup/imei/:imei', async (c) => {
 					row.status = 'bad';
 					bad.push({ ...msgGeo, hetData: dataArray });
 				}
-			}
-
-			function unixToIST(unixTime) {
-				const istOffset = 5.5;
-				const istDate = new Date(unixTime * 1000);
-				istDate.setHours(istDate.getHours() + istOffset);
-				istDate.setMinutes(istDate.getMinutes() + (istOffset % 1) * 60);
-				return istDate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
-			}
+			}		
 
 			hetGeoMap[row.created_date] = [JSON.parse(hetGeo.lat), JSON.parse(hetGeo.lng)];
 
