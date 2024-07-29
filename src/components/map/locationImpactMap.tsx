@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Marker, MapContainer, TileLayer, Polyline, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { GsmData, msgData, WifiData } from '../../types';
+import { msgData } from '../../types';
 import AdditionalPoints from './additionalPoints';
 import BoundsUpdater from './boundsUpdates'
 import MsgUuidSelector from './uuidSelector';
@@ -17,17 +17,17 @@ export interface InspectedUuid {
 }
 
 const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
-  console.log(`data: ${data}`)
   const [selectedUuids, setSelectedUuids] = useState<string[]>([]);
   const [inspectedUuid, setInspectedUuid] = useState<InspectedUuid | null>(null);
   const mapRef = useRef<L.Map | null>(null);
 
 
+  // Used for the uuidSelector component msg_uuid filter list
   const uniqueMsgUuids = useMemo(() => {
     if (data.length === 0) return [];
     return Array.from(new Set(data.map(msg => {
       if (msg.msg_geo !== null) {
-        const msgGeo = JSON.parse(JSON.stringify(msg.msg_geo));
+        const msgGeo = JSON.parse(msg.msg_geo);
         if (msgGeo.msg_source !== null) {
           return msgGeo.msg_source;
         }
@@ -56,6 +56,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
     });
   }, []);
 
+  // Used when clicking on a marker to inspect the uuid
   const handleMarkerClick = useCallback((uuid: string, msg: msgData) => {
     setInspectedUuid(prevInspected =>
       prevInspected?.uuid === uuid ? null : { uuid, msgData: msg }
@@ -127,6 +128,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
 
   const filteredData = useMemo(() => {
     if (data.length === 0) return [];
+
     if (inspectedUuid) {
       return data.filter(msg => {
         const msgGeo = JSON.parse(msg.msg_geo);
@@ -134,9 +136,10 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
         return msgGeo.msg_source === inspectedUuid.uuid;
       });
     }
+
     if (selectedUuids.length === 0) return data;
     return data.filter(msg => {
-      const msgGeo = JSON.parse(msg.heterogenous_geo);
+      const msgGeo = JSON.parse(msg.msg_geo);
       if (msgGeo === null || msgGeo === undefined) return
       return selectedUuids.includes(msgGeo.msg_source);
     });
@@ -195,7 +198,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
           onChange={setSelectedUuids}
         />
         <div className='w-1/2 p-2 ml-4 border border-gray-300 rounded-md'>
-          <h1>Tool Box Component</h1>
+          <h3>Tool Box Component</h3>
         </div>
       </div>
       <div className="flex-grow relative">
