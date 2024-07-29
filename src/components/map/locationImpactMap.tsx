@@ -22,6 +22,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
   const mapRef = useRef<L.Map | null>(null);
 
   const uniqueMsgUuids = useMemo(() => {
+    if (data.length === 0) return [];
     return Array.from(new Set(data.map(msg => {
       if (msg.msg_geo !== null) {
         const msgGeo = JSON.parse(msg.msg_geo);
@@ -65,7 +66,6 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
     const msgGeo = JSON.parse(msg.msg_geo);
 
     const heteroPosition: L.LatLngExpression = [heteroGeo.lat, heteroGeo.lng];
-    console.log(msgGeo)
     if (msgGeo === null) return
     const msgGeoPosition: L.LatLngExpression = [msgGeo.lat, msgGeo.lng];
 
@@ -102,7 +102,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
             <div>
               <h2>Message Geo</h2>
               <p>Tech: {msgGeo.tech.toUpperCase()}</p>
-              <p>IsHeT: {msgGeo.heterogenousLookup ? "true" : "false"}</p>
+              <p>IsHet: {msgGeo.heterogenousLookup ? "True" : "False"}</p>
               <p>Imei: {msg.bee_imei}</p>
               <p>Msg_uuid: {msgGeo.msg_source}</p>
               <p>Delta Distance: {msg.delta_distance}m</p>
@@ -124,6 +124,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
   }, [getIcon, handleMarkerClick, inspectedUuid]);
 
   const filteredData = useMemo(() => {
+    if (data.length === 0) return [];
     if (inspectedUuid) {
       return data.filter(msg => {
         const msgGeo = JSON.parse(msg.msg_geo);
@@ -177,6 +178,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
 
   // func to render all markers from constructured filteredData
   const renderAllMarkers = () => {
+    if (filteredData.length === 0) return null;
     console.time("Render All Markers");
     const markers = filteredData.map(renderMarkers);
     console.timeEnd("Render All Markers");
