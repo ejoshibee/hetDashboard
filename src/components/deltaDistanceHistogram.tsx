@@ -8,14 +8,13 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import { msgData } from '../types';
+import { msgData, Bin } from '../types';
 import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
 import { handleSendToMap } from '../lib/navHelpers';
 
-type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number; gsmCont: number; wifiCont: number; gpsCont: number; items: msgData[] };
 
-const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number } }) => {
+const TopBucketsBox: React.FC<{ binData: { bins: Bin[]; totalCount: number } }> = ({ binData }) => {
   const sortedBins = [...binData.bins].sort((a, b) => b.count - a.count);
   const topBins = sortedBins.slice(0, 5);
   const totalCount = binData.totalCount;

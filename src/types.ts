@@ -58,3 +58,14 @@ export interface msgData {
   delta_distance: number;
 }
 
+export type Bin = {
+  bin: string;
+  count: number;
+  gsmCount: number;
+  wifiCount: number;
+  gpsCount: number;
+  gsmCont: number;
+  wifiCont: number;
+  gpsCont: number;
+  items: msgData[]
+};
