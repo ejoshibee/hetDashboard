@@ -17,4 +17,5 @@ COPY . /usr/src/app/
 EXPOSE 5175
 
 # Command to run the application
+# TODO: Change to build command
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
