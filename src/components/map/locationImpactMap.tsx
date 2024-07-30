@@ -8,6 +8,7 @@ import BoundsUpdater from './boundsUpdates'
 import MsgUuidSelector from './uuidSelector';
 
 export interface LocationImpactMapProps {
+  uuidView: boolean;
   data: msgData[];
 }
 
@@ -16,7 +17,7 @@ export interface InspectedUuid {
   msgData: msgData;
 }
 
-const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
+const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView }) => {
   const [selectedUuids, setSelectedUuids] = useState<string[]>([]);
   const [inspectedUuid, setInspectedUuid] = useState<InspectedUuid | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -192,13 +193,26 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 flex bg-white shadow-md z-10">
-        <MsgUuidSelector
-          options={uniqueMsgUuids}
-          onChange={setSelectedUuids}
-        />
-        <div className='w-1/2 p-2 ml-4 border border-gray-300 rounded-md'>
-          <h3>Tool Box Component</h3>
+      <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center bg-white shadow-md z-10">
+        <div className="w-full sm:w-2/3 mb-4 sm:mb-0 sm:mr-4">
+          <MsgUuidSelector
+            uuidView={uuidView}
+            options={uniqueMsgUuids}
+            onChange={setSelectedUuids}
+          />
+        </div>
+        <div className='w-full sm:w-1/3'>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
+              Box 1
+            </div>
+            <div className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
+              Box 2
+            </div>
+            <div className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
+              Box 3
+            </div>
+          </div>
         </div>
       </div>
       <div className="flex-grow relative">

@@ -7,14 +7,13 @@ import {
   useLoaderData,
   Await,
   LoaderFunctionArgs,
-  useParams
 } from 'react-router-dom';
 import LocationImpactMap from '../components/map/locationImpactMap';
 import { msgData } from '../types';
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const uuid = params.uuid || null;
+  const uuid = url.searchParams.get('uuid');
   const startDate = url.searchParams.get('startDate');
   const endDate = url.searchParams.get('endDate');
 
@@ -41,14 +40,12 @@ export default function Map() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const pathParams = useParams();
 
   const bin = searchParams.get('bin');
   const imei = searchParams.get('imei');
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
-
-  const uuid = pathParams.uuid || null;
+  const uuid = searchParams.get('uuid');
 
   const { data } = useLoaderData() as { data: Promise<msgData[] | []> };
 
@@ -65,7 +62,7 @@ export default function Map() {
         <h1 className="text-2xl font-bold">
           {bin ? `Map view for bin ${bin}` :
             imei ? `No bin selected. Viewing imei: ${imei}` :
-              uuid ? `Viewing map for UUID: ${uuid}` : // Add condition for uuid
+              uuid ? `Viewing map for UUID: ${uuid}` :
                 `No bin, imei, or uuid selected. Search for a message`}
         </h1>
         <button
@@ -89,14 +86,14 @@ export default function Map() {
               console.log(`Data from navstate: ${navState}`);
               if (navState) {
                 return (
-                  <LocationImpactMap data={navState} />
+                  <LocationImpactMap data={navState} uuidView={false} />
                 );
               }
               // Otherwise, return the impactMap with data fetched 
               // from loader, meaning we accessed Map via a deep link
               // or directly to search for msg_uuids
               return (
-                <LocationImpactMap data={resolvedData} />
+                <LocationImpactMap data={resolvedData} uuidView={true} />
               );
             }}
           </Await>

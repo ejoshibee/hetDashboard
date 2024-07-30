@@ -27,7 +27,7 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
       },
       {
-        path: 'map/:uuid?',
+        path: 'map',
         element: <Map />,
         loader: mapLoader
       }

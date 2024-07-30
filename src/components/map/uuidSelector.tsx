@@ -1,13 +1,20 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useCallback
+} from 'react';
+import { Form, useNavigate } from 'react-router-dom';
 
 interface MsgUuidSelectorProps {
   options: string[];
   onChange: (selected: string[]) => void;
+  uuidView: boolean;
 }
 
-const MsgUuidSelector: React.FC<MsgUuidSelectorProps> = ({ options, onChange }) => {
+const MsgUuidSelector: React.FC<MsgUuidSelectorProps> = ({ options, onChange, uuidView }) => {
   const [inputValue, setInputValue] = useState('');
   const [selectedUuids, setSelectedUuids] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const filteredOptions = useMemo(() => {
     return options.filter(option => {
@@ -31,25 +38,29 @@ const MsgUuidSelector: React.FC<MsgUuidSelectorProps> = ({ options, onChange }) 
     onChange(newSelected);
   }, [selectedUuids, onChange]);
 
-  const handleEnterKey = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      // make fetch request to get data for uuid
-      console.log("enter pressed. doing something")
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && uuidView) {
+      console.log(`navigating to /map?uuid=${inputValue}`)
+      e.preventDefault()
+      navigate(`/map?uuid=${inputValue}`);
     }
-  }, [inputValue, handleSelect]);
+  }, [uuidView, inputValue, navigate]);
+
 
   return (
     <div className="relative z-50 w-1/2">
       <div className="relative">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleEnterKey}
-          placeholder="Type to search UUIDs"
-          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {inputValue && (
+        <Form method="get" action="/map">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type to search UUIDs"
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </Form>
+        {inputValue && uuidView === false && (
           <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
             {filteredOptions.slice(0, 5).map((option) => (
               <li

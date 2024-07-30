@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 import L from 'leaflet';
 import { useMap } from 'react-leaflet';
 import { msgData } from '../../types';
-import { InspectedUuid, LocationImpactMapProps } from './locationImpactMap';
+import { InspectedUuid } from './locationImpactMap';
 
-interface BoundsUpdaterProps extends LocationImpactMapProps {
+interface BoundsUpdaterProps {
   inspectedUuid: InspectedUuid | null;
+  data: msgData[];
 }
 
 const BoundsUpdater: React.FC<BoundsUpdaterProps> = ({ data, inspectedUuid }) => {
