@@ -2,10 +2,11 @@ import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Marker, MapContainer, TileLayer, Polyline, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { msgData } from '../../types';
-import AdditionalPoints from './additionalPoints';
-import BoundsUpdater from './boundsUpdates'
-import MsgUuidSelector from './uuidSelector';
+import { GsmData, msgData, WifiData } from '../../types';
+import AdditionalPoints from './locationImpactMap/additionalPoints';
+import BoundsUpdater from './locationImpactMap/boundsUpdates'
+import MsgUuidSelector from './locationImpactMap/uuidSelector';
+import { muteOrRelocate } from '../../lib/mapHelpers'
 
 export interface LocationImpactMapProps {
   uuidView: boolean;
@@ -20,6 +21,9 @@ export interface InspectedUuid {
 const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView }) => {
   const [selectedUuids, setSelectedUuids] = useState<string[]>([]);
   const [inspectedUuid, setInspectedUuid] = useState<InspectedUuid | null>(null);
+  const [relocatedPoint, setRelocatedPoint] = useState<{ lat: number, lng: number, accuracy: number } | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+
   const mapRef = useRef<L.Map | null>(null);
 
 
@@ -45,6 +49,8 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
       iconColorUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png'; // Change to your yellow icon URL
     } else if (type === 'gsm') {
       iconColorUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png'; // Change to your green icon URL
+    } else if (type === 'relocate') {
+      iconColorUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png'; // Change to your orange icon URL
     }
 
     return new L.Icon({
@@ -182,12 +188,30 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     return null;
   };
 
+  // func to handle the muteOrRelocate tool usage
+  // const handleMuteOrRelocate = () => {
+  //   if (relocatedPoint) {
+  //     setRelocatedPoint(null);
+  //   } else {
+  //     const result = muteOrRelocate(filteredData);
+  //     setRelocatedPoint(result);
+  //   }
+  // };
+  const handleMuteOrRelocate = () => {
+    if (!showDropdown) {
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+    }
+  };
+
   // func to render all markers from constructured filteredData
   const renderAllMarkers = () => {
     if (filteredData.length === 0) return null;
     console.time("Render All Markers");
     const markers = filteredData.map(renderMarkers);
     console.timeEnd("Render All Markers");
+    console.log(`Rendered markers: ${JSON.stringify(filteredData, null, 2)}`)
     return markers;
   };
 
@@ -203,15 +227,53 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
         </div>
         <div className='w-full sm:w-1/3'>
           <div className="grid grid-cols-3 gap-2">
-            <div className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
-              Box 1
-            </div>
-            <div className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
-              Box 2
-            </div>
-            <div className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
-              Box 3
-            </div>
+            <button className="p-2 content-center bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300"
+              onClick={handleMuteOrRelocate}
+            >
+              <p className='text-small truncate'>{relocatedPoint ? "Hide Relocated Geo" : "Mute or Relocate Geo"}</p>
+            </button>
+
+            {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
+            {showDropdown && (
+              <div className="absolute z-10 mt-14 w-80 bg-white border border-gray-300 rounded-md shadow-lg">
+                <div className="p-4 max-h-80 overflow-y-auto">
+                  <h3 className="text-lg font-semibold mb-3">CONTENT HERE</h3>
+                  {JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData, index: number) => (
+                    <div key={`het_point_${index}`} className="mb-3 pb-2 border-b border-gray-200 last:border-b-0">
+                      <p className="text-sm font-medium text-gray-600">{msg.type.toUpperCase()}</p>
+                      <p className="text-base font-semibold text-gray-800">
+                        {msg.type === 'gsm' ? msg.cid : msg.mac_address}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-4 border-t">
+                  <button
+                    className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md transition duration-300"
+                    onClick={() => {
+                      if (relocatedPoint) {
+                        setRelocatedPoint(null);
+                        setShowDropdown(false);
+                      } else {
+                        const result = muteOrRelocate(filteredData);
+                        setRelocatedPoint(result);
+                        setShowDropdown(false);
+                      }
+                    }}
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            )}
+            {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
+
+            <button className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
+              <p className='text-small truncate'>Validate Point</p>
+            </button>
+            <button className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
+              <p className='text-small truncate'>Third Tool OTW!</p>
+            </button>
           </div>
         </div>
       </div>
@@ -226,7 +288,19 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          {/* effectively filteredData.map(renderMarkers); */}
           {renderAllMarkers()}
+          {relocatedPoint && (
+            <Marker position={[relocatedPoint.lat, relocatedPoint.lng]} icon={getIcon('relocate')}>
+              <Tooltip>
+                <div>
+                  <h2>Relocated Point</h2>
+                  <p>Location: [lat: {relocatedPoint.lat}, lng: {relocatedPoint.lng}]</p>
+                  <p>Accuracy: {relocatedPoint.accuracy}m</p>
+                </div>
+              </Tooltip>
+            </Marker>
+          )}
           <BoundsUpdater data={filteredData} inspectedUuid={inspectedUuid} />
           <PerformanceOptimizer />
         </MapContainer>
