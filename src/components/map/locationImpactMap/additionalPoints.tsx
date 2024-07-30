@@ -1,7 +1,7 @@
 import React from 'react';
 import { Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
-import { msgData } from '../../types';
+import { msgData } from '../../../types';
 
 // Function to create icon
 const createIcon = (color: string, type: 'gsm' | 'wifi') => {

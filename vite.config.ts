@@ -20,6 +20,10 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/api/, '')
         },
       },
+      host: true,
+      watch: {
+        usePolling: true,
+      },
     }
   }
 })
