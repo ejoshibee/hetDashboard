@@ -3,7 +3,11 @@ import React, {
   useMemo,
   useCallback
 } from 'react';
-import { Form, useNavigate } from 'react-router-dom';
+
+import {
+  Form,
+  useNavigate
+} from 'react-router-dom';
 
 interface MsgUuidSelectorProps {
   options: string[];

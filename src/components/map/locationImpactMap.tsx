@@ -1,12 +1,15 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Marker, MapContainer, TileLayer, Polyline, Tooltip, useMap } from 'react-leaflet';
+
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { GsmData, msgData, WifiData } from '../../types';
+
 import AdditionalPoints from './locationImpactMap/additionalPoints';
 import BoundsUpdater from './locationImpactMap/boundsUpdates'
 import MsgUuidSelector from './locationImpactMap/uuidSelector';
+
 import { muteOrRelocate } from '../../lib/mapHelpers'
+import { GsmData, msgData, WifiData } from '../../types';
 
 export interface LocationImpactMapProps {
   uuidView: boolean;
@@ -235,21 +238,25 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
 
             {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
             {showDropdown && (
-              <div className="absolute z-10 mt-14 w-80 bg-white border border-gray-300 rounded-md shadow-lg">
+              <div className="absolute z-10 mt-14 w-96 bg-white border border-gray-300 rounded-md shadow-lg">
                 <div className="p-4 max-h-80 overflow-y-auto">
-                  <h3 className="text-lg font-semibold mb-3">CONTENT HERE</h3>
-                  {JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData, index: number) => (
-                    <div key={`het_point_${index}`} className="mb-3 pb-2 border-b border-gray-200 last:border-b-0">
-                      <p className="text-sm font-medium text-gray-600">{msg.type.toUpperCase()}</p>
-                      <p className="text-base font-semibold text-gray-800">
-                        {msg.type === 'gsm' ? msg.cid : msg.mac_address}
-                      </p>
-                    </div>
-                  ))}
+                  <div className="grid grid-cols-2 gap-4">
+                    {JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData, index: number) => (
+                      <div
+                        key={`het_point_${index}`}
+                        className="bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition duration-300"
+                      >
+                        <p className="text-xs font-medium text-gray-500">{msg.type.toUpperCase()}</p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                          {msg.type === 'gsm' ? msg.cid : msg.mac_address}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="p-4 border-t">
                   <button
-                    className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md transition duration-300"
+                    className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md transition duration-300 flex items-center justify-center"
                     onClick={() => {
                       if (relocatedPoint) {
                         setRelocatedPoint(null);
@@ -261,7 +268,11 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
                       }
                     }}
                   >
-                    Apply
+                    {/* Temporary icon */}
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 100-2h-4a1 1 0 100 2h4zm-5 6a1 1 0 011-1h8a1 1 0 110 2H8a1 1 0 01-1-1zm1 3a1 1 0 100 2h8a1 1 0 100-2H8z" clipRule="evenodd" />
+                    </svg>
+                    {relocatedPoint ? 'Reset' : 'Apply'}
                   </button>
                 </div>
               </div>
