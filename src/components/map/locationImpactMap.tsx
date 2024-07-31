@@ -8,7 +8,7 @@ import AdditionalPoints from './locationImpactMap/additionalPoints';
 import BoundsUpdater from './locationImpactMap/boundsUpdates'
 import MsgUuidSelector from './locationImpactMap/uuidSelector';
 
-import { muteOrRelocate } from '../../lib/mapHelpers'
+import { relocate, mute } from '../../lib/mapHelpers'
 import { GsmData, msgData, WifiData } from '../../types';
 
 export interface LocationImpactMapProps {
@@ -26,6 +26,10 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
   const [inspectedUuid, setInspectedUuid] = useState<InspectedUuid | null>(null);
   const [relocatedPoint, setRelocatedPoint] = useState<{ lat: number, lng: number, accuracy: number } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // For dropdown hetData items
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+
 
   const mapRef = useRef<L.Map | null>(null);
 
@@ -200,13 +204,23 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
   //     setRelocatedPoint(result);
   //   }
   // };
-  const handleMuteOrRelocate = () => {
+  const handleMuteOrRelocate = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.preventDefault()
     if (!showDropdown) {
       setShowDropdown(true);
     } else {
       setShowDropdown(false);
     }
   };
+
+  const handleItemClick = (index: number) => {
+    setSelectedItems(prevSelected =>
+      prevSelected.includes(index)
+        ? prevSelected.filter((i: number) => i !== index)
+        : [...prevSelected, index]
+    );
+  };
+
 
   // func to render all markers from constructured filteredData
   const renderAllMarkers = () => {
@@ -233,46 +247,57 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
             <button className="p-2 content-center bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300"
               onClick={handleMuteOrRelocate}
             >
-              <p className='text-small truncate'>{relocatedPoint ? "Hide Relocated Geo" : "Mute or Relocate Geo"}</p>
+              <p className='text-small truncate'>Mute or Relocate Geo</p>
             </button>
 
             {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
             {showDropdown && (
-              <div className="absolute z-10 mt-14 w-96 bg-white border border-gray-300 rounded-md shadow-lg">
+              <div className="absolute z-10 mt-14 w-96 bg-neutral-000 border border-neutral-300 rounded-md shadow-lg font-sans">
                 <div className="p-4 max-h-80 overflow-y-auto">
                   <div className="grid grid-cols-2 gap-4">
                     {JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData, index: number) => (
                       <div
                         key={`het_point_${index}`}
-                        className="bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition duration-300"
+                        className={`text-center bg-yellow-bee-100 p-3 rounded-lg hover:bg-yellow-bee-200 transition duration-300 cursor-pointer ${selectedItems.includes(index) ? 'bg-yellow-bee-200 ring-2 ring-yellow-bee-400' : ''
+                          }`}
+                        onClick={() => handleItemClick(index)}
                       >
-                        <p className="text-xs font-medium text-gray-500">{msg.type.toUpperCase()}</p>
-                        <p className="text-sm font-semibold text-gray-800 truncate">
+                        <p className="text-small-bold uppercase text-neutral-600">{msg.type}</p>
+                        <p className="text-caption text-neutral-900 truncate">
                           {msg.type === 'gsm' ? msg.cid : msg.mac_address}
                         </p>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="p-4 border-t">
+                <div className="p-4 border-t border-neutral-200 flex gap-4">
                   <button
-                    className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md transition duration-300 flex items-center justify-center"
+                    className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-800 text-button-bold rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={selectedItems.length === 0}
+                    onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+                      e.preventDefault()
+                      console.log(`Muting selected items: ${selectedItems}`);
+                      mute(filteredData, selectedItems);
+                      setShowDropdown(false);
+                    }}
+                  >
+                    Mute Selected ({selectedItems.length})
+                  </button>
+                  <button
+                    className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-yellow-bee-800 text-button-bold rounded-md transition duration-300"
                     onClick={() => {
                       if (relocatedPoint) {
                         setRelocatedPoint(null);
                         setShowDropdown(false);
                       } else {
-                        const result = muteOrRelocate(filteredData);
+                        // call muteOrRelocate map helper
+                        const result = relocate(filteredData);
                         setRelocatedPoint(result);
                         setShowDropdown(false);
                       }
                     }}
                   >
-                    {/* Temporary icon */}
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 100-2h-4a1 1 0 100 2h4zm-5 6a1 1 0 011-1h8a1 1 0 110 2H8a1 1 0 01-1-1zm1 3a1 1 0 100 2h8a1 1 0 100-2H8z" clipRule="evenodd" />
-                    </svg>
-                    {relocatedPoint ? 'Reset' : 'Apply'}
+                    {relocatedPoint ? 'Hide Relocation' : 'Relocate'}
                   </button>
                 </div>
               </div>
@@ -280,7 +305,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
             {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
 
             <button className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
-              <p className='text-small truncate'>Validate Point</p>
+              <p className='text-small truncate'>Validate Signal</p>
             </button>
             <button className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
               <p className='text-small truncate'>Third Tool OTW!</p>
