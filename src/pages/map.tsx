@@ -66,7 +66,7 @@ export default function Map() {
                 `No bin, imei, or uuid selected. Search for a message`}
         </h1>
         <button
-          className="bg-yellow-bee-200 hover:bg-yellow-bee-400 text-neutral-000 text-button-bold py-2 px-4 rounded-md transition duration-300"
+          className="bg-yellow-bee-200 hover:bg-orange-200 text-neutral-800 text-button-bold py-2 px-4 rounded-md transition duration-300"
           onClick={handleNavToDashboard}
         >
           View on dashboard

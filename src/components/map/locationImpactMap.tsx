@@ -244,10 +244,11 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
         </div>
         <div className='w-full sm:w-1/3'>
           <div className="grid grid-cols-3 gap-2">
-            <button className="p-2 content-center bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300"
+            <button
+              className="p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300"
               onClick={handleMuteOrRelocate}
             >
-              <p className='text-small truncate'>Mute or Relocate Geo</p>
+              <p className='text-button-bold text-yellow-bee-800 truncate'>Mute or Relocate Geo</p>
             </button>
 
             {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
@@ -304,11 +305,15 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
             )}
             {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
 
-            <button className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
-              <p className='text-small truncate'>Validate Signal</p>
+            <button
+              className="p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300"
+            >
+              <p className='text-button-bold text-neutral-800 truncate'>Validate Signal</p>
             </button>
-            <button className="p-4 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300">
-              <p className='text-small truncate'>Third Tool OTW!</p>
+            <button
+              className="p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300"
+            >
+              <p className='text-button-bold text-neutral-800 truncate'>Third Tool OTW!</p>
             </button>
           </div>
         </div>
