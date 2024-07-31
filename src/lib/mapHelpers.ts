@@ -109,8 +109,8 @@ export const relocate = (data: msgData[]): { lat: number; lng: number; accuracy:
 export const mute = (data: msgData[], selectedItems: number[]): void => {
   // if here we are muting selected points and presumably making api call
   // we need to get the points that are referenced by the selected items indices
-  // we need to mute or relocate the points that are referenced by the selected items indices
-  // we need to return the new center
+
+  // @ts-expect-error parsing
   const hetData = JSON.parse(data[0].data)
   const selectedPoints = hetData.filter((_: never, index: number) => selectedItems.includes(index))
   console.log(`selectedPoints: ${JSON.stringify(selectedPoints, null, 2)}`)
