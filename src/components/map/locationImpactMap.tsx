@@ -199,6 +199,10 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
   // func to handle the muteOrRelocate tool popover
   const handleMuteOrRelocate = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault()
+    // early return when no more than 1 message rendered. 
+    // Remember, this action is only availbale when inspecting a single message
+    // TODO: UX Feedback for this instead of silent return
+    if (filteredData.length > 1) return
     if (!showDropdown) {
       setShowDropdown(true);
     } else {
@@ -315,7 +319,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
         <MapContainer
           center={[0, 0]}
           zoom={2}
-          className='h-full w-full z-1'
+          style={{ height: '100%', width: '100%', zIndex: 1 }}
           scrollWheelZoom={true}
         >
           <TileLayer
