@@ -30,9 +30,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
   // For dropdown hetData items
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
-
   const mapRef = useRef<L.Map | null>(null);
-
 
   // Used for the uuidSelector component msg_uuid filter list
   const uniqueMsgUuids = useMemo(() => {
@@ -70,15 +68,8 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     });
   }, []);
 
-  // Used when clicking on a marker to inspect the uuid
-  const handleMarkerClick = useCallback((uuid: string, msg: msgData) => {
-    setInspectedUuid(prevInspected =>
-      prevInspected?.uuid === uuid ? null : { uuid, msgData: msg }
-    );
-  }, []);
-
+  // func to render markers and other geo objects for a msg
   const renderMarkers = useCallback((msg: msgData) => {
-
     const heteroGeo = JSON.parse(msg.heterogenous_geo);
     const msgGeo = JSON.parse(msg.msg_geo);
 
@@ -143,6 +134,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
   const filteredData = useMemo(() => {
     if (data.length === 0) return [];
 
+    // filter by onclick (inspectedUuid set onClick of marker)
     if (inspectedUuid) {
       return data.filter(msg => {
         const msgGeo = JSON.parse(msg.msg_geo);
@@ -151,6 +143,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
       });
     }
 
+    // filter by uuid selector inputs
     if (selectedUuids.length === 0) return data;
     return data.filter(msg => {
       const msgGeo = JSON.parse(msg.msg_geo);
@@ -195,15 +188,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     return null;
   };
 
-  // func to handle the muteOrRelocate tool usage
-  // const handleMuteOrRelocate = () => {
-  //   if (relocatedPoint) {
-  //     setRelocatedPoint(null);
-  //   } else {
-  //     const result = muteOrRelocate(filteredData);
-  //     setRelocatedPoint(result);
-  //   }
-  // };
+  // func to handle the muteOrRelocate tool popover
   const handleMuteOrRelocate = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault()
     if (!showDropdown) {
@@ -213,6 +198,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     }
   };
 
+  // func to handle the item click for the muteOrRelocate tool popover
   const handleItemClick = (index: number) => {
     setSelectedItems(prevSelected =>
       prevSelected.includes(index)
@@ -221,6 +207,12 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     );
   };
 
+  // func to handle the marker click to inspect a msg
+  const handleMarkerClick = useCallback((uuid: string, msg: msgData) => {
+    setInspectedUuid(prevInspected =>
+      prevInspected?.uuid === uuid ? null : { uuid, msgData: msg }
+    );
+  }, []);
 
   // func to render all markers from constructured filteredData
   const renderAllMarkers = () => {
