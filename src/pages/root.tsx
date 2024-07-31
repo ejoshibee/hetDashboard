@@ -18,7 +18,7 @@ export default function Root() {
       <div className={`bg-neutral-000 ${isCollapsed ? 'w-16' : 'w-64'} border-r border-neutral-300 overflow-y-auto transition-width duration-300`}>
         <div className="flex items-start p-4">
           <Link to="/">
-            <img src={RBlogo} alt="RB Logo" className={`cursor-pointer ${isCollapsed ? 'hidden' : 'w-36'}`} />
+            <img src={RBlogo} alt="RB Logo" className={`cursor-pointer transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-36'}`} />
           </Link>
           <button onClick={toggleSidebar} className="ml-auto focus:outline-none">
             <svg
@@ -40,16 +40,16 @@ export default function Root() {
         <div className="py-6">
           <nav>
             <Link to="/" className="p-2 w-full hover:bg-yellow-bee-400 transition duration-300 flex items-center">
-              <img src={homeIcon} alt="Home" className="w-6 h-6" />
-              {!isCollapsed && <span className="block px-6 text-title text-neutral-800">Home</span>}
+              <img src={homeIcon} alt="Home" className={`w-6 h-6 transition-transform duration-300 ${isCollapsed ? '-translate-y-6' : 'translate-y-0'}`} />
+              <span className={`block px-6 text-title text-neutral-800 transition-all duration-300 ${isCollapsed ? 'opacity-0 max-w-0 -translate-y-6' : 'opacity-100 max-w-full translate-y-0'}`}>Home</span>
             </Link>
             <Link to="/dashboard" className="p-2 w-full hover:bg-yellow-bee-400 transition duration-300 flex items-center">
-              <img src={dashboardIcon} alt="Dashboard" className="w-6 h-6" />
-              {!isCollapsed && <span className="block px-6 text-title text-neutral-800">Dashboard</span>}
+              <img src={dashboardIcon} alt="Dashboard" className={`w-6 h-6 transition-transform duration-300 ${isCollapsed ? '-translate-y-6' : 'translate-y-0'}`} />
+              <span className={`block px-6 text-title text-neutral-800 transition-all duration-300 ${isCollapsed ? 'opacity-0 max-w-0 -translate-y-6' : 'opacity-100 max-w-full translate-y-0'}`}>Dashboard</span>
             </Link>
             <Link to="/map" className="p-2 w-full hover:bg-yellow-bee-400 transition duration-300 flex items-center">
-              <img src={mapIcon} alt="Map" className="w-6 h-6" />
-              {!isCollapsed && <span className="block px-6 text-title text-neutral-800">Map</span>}
+              <img src={mapIcon} alt="Map" className={`w-6 h-6 transition-transform duration-300 ${isCollapsed ? '-translate-y-6' : 'translate-y-0'}`} />
+              <span className={`block px-6 text-title text-neutral-800 transition-all duration-300 ${isCollapsed ? 'opacity-0 max-w-0 -translate-y-6' : 'opacity-100 max-w-full translate-y-0'}`}>Map</span>
             </Link>
           </nav>
         </div>
