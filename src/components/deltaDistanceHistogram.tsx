@@ -13,8 +13,9 @@ import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
 import { handleSendToMap } from '../lib/navHelpers';
 
+export type BinData = { binData: { bins: Bin[]; totalCount: number } }
 
-const TopBucketsBox: React.FC<{ binData: { bins: Bin[]; totalCount: number } }> = ({ binData }) => {
+const TopBucketsBox: React.FC<BinData> = ({ binData }) => {
   const sortedBins = [...binData.bins].sort((a, b) => b.count - a.count);
   const topBins = sortedBins.slice(0, 5);
   const totalCount = binData.totalCount;
@@ -135,6 +136,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
     }
   };
 
+  // @ts-expect-error hidden bin typing from recharts
   const handleBarClick = (bin) => {
     if (bin.activePayload[0].payload.items.length > 5000) {
       // TODO: implement Toast mechanism  
@@ -161,6 +163,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
     setSelectedBin(null);
   };
 
+  // @ts-expect-error hidden bin typing from recharts
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const count = payload[0].value;
@@ -253,6 +256,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
             <XAxis dataKey="bin" axisLine={false} tickLine={false} />
             <YAxis type="number" scale="log" domain={['auto', 'auto']} axisLine={false} tickLine={false} />
             <CartesianGrid strokeDasharray="3 3" />
+            {/* @ts-expect-error hidden bin typing from recharts */}
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="count" fill="#FDB933" />
           </BarChart>
