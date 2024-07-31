@@ -1,18 +1,56 @@
 import { Link, Outlet } from "react-router-dom";
-import RBlogo from '../assets/RBlogo.svg'
+import { useState } from 'react';
+
+import RBlogo from '../assets/RBlogo.svg';
+import homeIcon from '../assets/homeIcon.png';  // replace with actual paths
+import dashboardIcon from '../assets/dashboardIcon.png';
+import mapIcon from '../assets/mapIcon.png';
 
 export default function Root() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
-      <div className="bg-yellow-bee-50 w-64 border-r border-neutral-300 overflow-y-auto">
-        <Link to="/">
-          <img src={RBlogo} alt="RB Logo" className="cursor-pointer" />
-        </Link>
-        <div className="p-6">
-          <nav className="space-y-6">
-            <Link to="/" className="block text-title text-neutral-800 hover:text-oceanic-blue-600 transition duration-300">Home</Link>
-            <Link to="/dashboard" className="block text-title text-neutral-800 hover:text-oceanic-blue-600 transition duration-300">Dashboard</Link>
-            <Link to="/map" className="block text-title text-neutral-800 hover:text-oceanic-blue-600 transition duration-300">Map</Link>
+      <div className={`bg-neutral-000 ${isCollapsed ? 'w-16' : 'w-64'} border-r border-neutral-300 overflow-y-auto transition-width duration-300`}>
+        <div className="flex items-start p-4">
+          <Link to="/">
+            <img src={RBlogo} alt="RB Logo" className={`cursor-pointer ${isCollapsed ? 'hidden' : 'w-36'}`} />
+          </Link>
+          <button onClick={toggleSidebar} className="ml-auto focus:outline-none">
+            <svg
+              className="w-6 h-6 text-neutral-800"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d={isCollapsed ? 'M9 19l7-7-7-7' : 'M15 19l-7-7 7-7'}
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="py-6">
+          <nav>
+            <Link to="/" className="p-2 w-full hover:bg-yellow-bee-400 transition duration-300 flex items-center">
+              <img src={homeIcon} alt="Home" className="w-6 h-6" />
+              {!isCollapsed && <span className="block px-6 text-title text-neutral-800">Home</span>}
+            </Link>
+            <Link to="/dashboard" className="p-2 w-full hover:bg-yellow-bee-400 transition duration-300 flex items-center">
+              <img src={dashboardIcon} alt="Dashboard" className="w-6 h-6" />
+              {!isCollapsed && <span className="block px-6 text-title text-neutral-800">Dashboard</span>}
+            </Link>
+            <Link to="/map" className="p-2 w-full hover:bg-yellow-bee-400 transition duration-300 flex items-center">
+              <img src={mapIcon} alt="Map" className="w-6 h-6" />
+              {!isCollapsed && <span className="block px-6 text-title text-neutral-800">Map</span>}
+            </Link>
           </nav>
         </div>
       </div>
