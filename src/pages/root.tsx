@@ -2,7 +2,7 @@ import { Link, Outlet } from "react-router-dom";
 import { useState } from 'react';
 
 import RBlogo from '../assets/RBlogo.svg';
-import homeIcon from '../assets/homeIcon.png';  // replace with actual paths
+import homeIcon from '../assets/homeIcon.png';
 import dashboardIcon from '../assets/dashboardIcon.png';
 import mapIcon from '../assets/mapIcon.png';
 
@@ -12,6 +12,10 @@ export default function Root() {
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
+
+  const iconStyling = `w-6 h-6 transition-all duration-300`;
+  const textStyling = `block px-6 text-title text-neutral-800 transition-all duration-300 ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'}`;
+  const linkStyling = `p-2 w-full flex items-center transition-all duration-300 hover:bg-yellow-bee-400`;
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -37,19 +41,19 @@ export default function Root() {
             </svg>
           </button>
         </div>
-        <div className="py-6">
+        <div >
           <nav>
-            <Link to="/" className="p-2 w-full hover:bg-yellow-bee-400 transition duration-300 flex items-center">
-              <img src={homeIcon} alt="Home" className={`w-6 h-6 transition-transform duration-300 ${isCollapsed ? '-translate-y-6' : 'translate-y-0'}`} />
-              <span className={`block px-6 text-title text-neutral-800 transition-all duration-300 ${isCollapsed ? 'opacity-0 max-w-0 -translate-y-6' : 'opacity-100 max-w-full translate-y-0'}`}>Home</span>
+            <Link to="/" className={linkStyling}>
+              <img src={homeIcon} alt="Home" className={iconStyling} />
+              <span className={textStyling}>Home</span>
             </Link>
-            <Link to="/dashboard" className="p-2 w-full hover:bg-yellow-bee-400 transition duration-300 flex items-center">
-              <img src={dashboardIcon} alt="Dashboard" className={`w-6 h-6 transition-transform duration-300 ${isCollapsed ? '-translate-y-6' : 'translate-y-0'}`} />
-              <span className={`block px-6 text-title text-neutral-800 transition-all duration-300 ${isCollapsed ? 'opacity-0 max-w-0 -translate-y-6' : 'opacity-100 max-w-full translate-y-0'}`}>Dashboard</span>
+            <Link to="/dashboard" className={linkStyling}>
+              <img src={dashboardIcon} alt="Dashboard" className={iconStyling} />
+              <span className={textStyling}>Dashboard</span>
             </Link>
-            <Link to="/map" className="p-2 w-full hover:bg-yellow-bee-400 transition duration-300 flex items-center">
-              <img src={mapIcon} alt="Map" className={`w-6 h-6 transition-transform duration-300 ${isCollapsed ? '-translate-y-6' : 'translate-y-0'}`} />
-              <span className={`block px-6 text-title text-neutral-800 transition-all duration-300 ${isCollapsed ? 'opacity-0 max-w-0 -translate-y-6' : 'opacity-100 max-w-full translate-y-0'}`}>Map</span>
+            <Link to="/map" className={linkStyling}>
+              <img src={mapIcon} alt="Map" className={iconStyling} />
+              <span className={textStyling}>Map</span>
             </Link>
           </nav>
         </div>
