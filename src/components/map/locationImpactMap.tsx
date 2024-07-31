@@ -7,9 +7,10 @@ import 'leaflet/dist/leaflet.css';
 import AdditionalPoints from './locationImpactMap/additionalPoints';
 import BoundsUpdater from './locationImpactMap/boundsUpdates'
 import MsgUuidSelector from './locationImpactMap/uuidSelector';
+import Toolbox from './toolbox/toolbox';
 
 import { relocate, mute } from '../../lib/mapHelpers'
-import { GsmData, msgData, WifiData } from '../../types';
+import { msgData } from '../../types';
 
 export interface LocationImpactMapProps {
   uuidView: boolean;
@@ -25,10 +26,6 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
   const [selectedUuids, setSelectedUuids] = useState<string[]>([]);
   const [inspectedUuid, setInspectedUuid] = useState<InspectedUuid | null>(null);
   const [relocatedPoint, setRelocatedPoint] = useState<{ lat: number, lng: number, accuracy: number } | null>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  // For dropdown hetData items
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
   const mapRef = useRef<L.Map | null>(null);
 
@@ -196,29 +193,6 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     return null;
   };
 
-  // func to handle the muteOrRelocate tool popover
-  const handleMuteOrRelocate = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    e.preventDefault()
-    // early return when no more than 1 message rendered. 
-    // Remember, this action is only availbale when inspecting a single message
-    // TODO: UX Feedback for this instead of silent return
-    if (filteredData.length > 1) return
-    if (!showDropdown) {
-      setShowDropdown(true);
-    } else {
-      setShowDropdown(false);
-    }
-  };
-
-  // func to handle the item click for the muteOrRelocate tool popover
-  const handleItemClick = (index: number) => {
-    setSelectedItems(prevSelected =>
-      prevSelected.includes(index)
-        ? prevSelected.filter((i: number) => i !== index)
-        : [...prevSelected, index]
-    );
-  };
-
   // func to render all markers from constructured filteredData
   const renderAllMarkers = () => {
     if (filteredData.length === 0) return null;
@@ -238,84 +212,25 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
             options={uniqueMsgUuids}
             onChange={setSelectedUuids}
           />
-        </div>
-        <div className='w-full sm:w-1/3'>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              className="p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300"
-              onClick={handleMuteOrRelocate}
-            >
-              <p className='text-button-bold text-neutral-800 truncate'>Mute or Relocate Geo</p>
-            </button>
+        </div >
 
-            {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
-            {showDropdown && (
-              <div className="absolute z-10 mt-14 w-96 bg-neutral-000 border border-neutral-300 rounded-md shadow-lg font-sans">
-                <div className="p-4 max-h-80 overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-4">
-                    {JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData, index: number) => (
-                      <div
-                        key={`het_point_${index}`}
-                        className={`text-center bg-yellow-bee-100 p-3 rounded-lg hover:bg-yellow-bee-200 transition duration-300 cursor-pointer ${selectedItems.includes(index) ? 'bg-yellow-bee-200 ring-2 ring-yellow-bee-400' : ''
-                          }`}
-                        onClick={() => handleItemClick(index)}
-                      >
-                        <p className="text-small-bold uppercase text-neutral-600">{msg.type}</p>
-                        <p className="text-caption text-neutral-900 truncate">
-                          {msg.type === 'gsm' ? msg.cid : msg.mac_address}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="p-4 border-t border-neutral-200 flex gap-4">
-                  <button
-                    className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-800 text-button-bold rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={selectedItems.length === 0}
-                    onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-                      e.preventDefault()
-                      console.log(`Muting selected items: ${selectedItems}`);
-                      mute(filteredData, selectedItems);
-                      setShowDropdown(false);
-                    }}
-                  >
-                    Mute Selected ({selectedItems.length})
-                  </button>
-                  <button
-                    className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-yellow-bee-800 text-button-bold rounded-md transition duration-300"
-                    onClick={() => {
-                      if (relocatedPoint) {
-                        setRelocatedPoint(null);
-                        setShowDropdown(false);
-                      } else {
-                        // call muteOrRelocate map helper
-                        const result = relocate(filteredData);
-                        setRelocatedPoint(result);
-                        setShowDropdown(false);
-                      }
-                    }}
-                  >
-                    {relocatedPoint ? 'Hide Relocation' : 'Relocate'}
-                  </button>
-                </div>
-              </div>
-            )}
-            {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
+        {/* Replace old toolbox with new Toolbox component */}
+        < Toolbox
+          data={data}
+          filteredData={filteredData}
+          mute={mute}
+          relocate={(data) => {
+            const result = relocate(data);
+            setRelocatedPoint(result);
+            return result;
+          }}
+          setRelocatedPoint={setRelocatedPoint}
+          relocatedPoint={relocatedPoint}
+        />
+      </div >
 
-            <button
-              className="p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300"
-            >
-              <p className='text-button-bold text-neutral-800 truncate'>Validate Signal</p>
-            </button>
-            <button
-              className="p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300"
-            >
-              <p className='text-button-bold text-neutral-800 truncate'>Third Tool OTW!</p>
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="flex-grow relative">
+      {/* MAP COMPONENT */}
+      < div className="flex-grow relative" >
         <MapContainer
           center={[0, 0]}
           zoom={2}
@@ -326,7 +241,6 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {/* effectively filteredData.map(renderMarkers); */}
           {renderAllMarkers()}
           {relocatedPoint && (
             <Marker position={[relocatedPoint.lat, relocatedPoint.lng]} icon={getIcon('relocate')}>
@@ -342,8 +256,8 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
           <BoundsUpdater data={filteredData} inspectedUuid={inspectedUuid} />
           <PerformanceOptimizer />
         </MapContainer>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
