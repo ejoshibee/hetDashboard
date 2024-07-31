@@ -20,22 +20,22 @@ const TopBucketsBox: React.FC<{ binData: { bins: Bin[]; totalCount: number } }> 
   const totalCount = binData.totalCount;
 
   return (
-    <div className="w-full bg-white border-3px rounded-lg shadow-md p-4 flex flex-col">
-      <h2 className="text-xl text-center font-bold mb-4">Top Buckets: {totalCount} points</h2>
+    <div className="w-full bg-neutral-000 border border-neutral-300 rounded-lg shadow-md p-4 flex flex-col">
+      <h2 className="text-title-bold text-neutral-900 text-center mb-4">Top Buckets: {totalCount} points</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {topBins.map((bin) => (
-          <div key={bin.bin} className="bg-gray-100 p-3 rounded">
+          <div key={bin.bin} className="bg-yellow-bee-100 ring-2 ring-orange-100 p-3 rounded-md">
             <div className="flex justify-between items-center">
-              <span className="font-medium">Range: {bin.bin}</span>
+              <span className="text-small-bold text-neutral-800">Range: {bin.bin}</span>
               <div className="flex items-baseline">
-                <span className="font-bold">{bin.count}</span>
-                <span className="ml-2 text-gray-500">
+                <span className="text-small-bold text-neutral-900">{bin.count}</span>
+                <span className="ml-2 text-small text-neutral-600">
                   ({((bin.count / totalCount) * 100).toFixed(2)}%)
                 </span>
               </div>
             </div>
-            <div className="mt-2 text-center font-semibold">Average Counts</div>
-            <div className="text-gray-500 text-center">
+            <div className="mt-2 text-center text-small-bold text-neutral-800">Average Counts</div>
+            <div className="text-caption text-neutral-600 text-center">
               GSM: {(bin.gsmCount / bin.count).toFixed(4)}, WiFi: {(bin.wifiCount / bin.count).toFixed(4)}, GPS: {(bin.gpsCount / bin.count).toFixed(4)}
             </div>
           </div>
@@ -172,13 +172,20 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
       const wifiCont = payload[0].payload.wifiCont
       const gpsCont = payload[0].payload.gpsCont
       return (
-        <div className="bg-white border border-gray-300 rounded-lg p-2">
-          <p>Range: {label}</p>
-          <p>Count: {count}</p>
-          <p>Percentage: {percentage}%</p>
-          <p>GSM: {gsmCount}, WiFi: {wifiCount}, GPS: {gpsCount}</p>
-          <p>---Accepted Contributions---</p>
-          <p>GSM: {gsmCont}, WiFi: {wifiCont}, GPS: {gpsCont}</p>
+        <div className="bg-neutral-000 border border-neutral-300 rounded-lg p-4">
+          <p className="text-small-bold text-neutral-800 mb-2">Range: <span className="text-small text-neutral-600">{label}</span></p>
+          <p className="text-small-bold text-neutral-800 mb-2">Count: <span className="text-small text-neutral-600">{count}</span></p>
+          <p className="text-small-bold text-neutral-800 mb-2">Percentage: <span className="text-small text-neutral-600">{percentage}%</span></p>
+          <p className="text-small-bold text-neutral-800 mt-4">Average Counts</p>
+          <p className="text-small-bold text-neutral-800 mb-2">
+            GSM: <span className="text-small text-neutral-600">{gsmCount}</span>{' '}
+            WiFi: <span className="text-small text-neutral-600">{wifiCount}</span>{' '}
+            GPS: <span className="text-small text-neutral-600">{gpsCount}</span>
+          </p>
+          <p className="text-small-bold text-neutral-800 mt-4">Accepted Contributions</p>
+          <p className="text-small text-neutral-600">
+            GSM: {gsmCont}{' '} WiFi: {wifiCont}{' '} GPS: {gpsCont}
+          </p>
         </div>
       );
     }
@@ -209,25 +216,30 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
 
   return (
     <div className="mb-8">
-      <div className="mb-6 flex flex-col md:flex-row justify-between">
-        <div className="h-full flex flex-col justify-center mb-4 md:mb-0">
-          <h2 className="text-2xl font-bold mb-2">Delta Distance Histogram</h2>
-          <div className="flex items-center">
-            <label className="mr-2">Bin Width (km):</label>
-            <input
-              type="number"
-              value={binWidth}
-              onChange={handleBinWidthChange}
-              className="border rounded p-1 mr-4"
-            />
-            <label className="flex items-center">
+      <div className="flex flex-col md:flex-row justify-between gap-6 mb-6">
+        <div className="flex flex-col ">
+          <h2 className="mb-2">Delta Distance Histogram</h2>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center">
+              <label htmlFor="binWidth" className="text-small-bold text-neutral-800 mr-2">
+                Bin Width (km):
+              </label>
+              <input
+                id="binWidth"
+                type="number"
+                value={binWidth}
+                onChange={handleBinWidthChange}
+                className="border border-neutral-300 rounded-md p-2 text-small text-neutral-900 focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent w-24"
+              />
+            </div>
+            <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={showHetOnly}
                 onChange={(e) => setShowHetOnly(e.target.checked)}
-                className="mr-2"
+                className="mr-2 h-4 w-4 text-yellow-bee-400 focus:ring-yellow-bee-400 border-neutral-300 rounded"
               />
-              Show HeteroLookup Only
+              <span className="text-small text-neutral-800">Show HeteroLookup Only</span>
             </label>
           </div>
         </div>
@@ -242,13 +254,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
             <YAxis type="number" scale="log" domain={['auto', 'auto']} axisLine={false} tickLine={false} />
             <CartesianGrid strokeDasharray="3 3" />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="count" fill="url(#colorUv)" />
-            <defs>
-              <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.8} />
-              </linearGradient>
-            </defs>
+            <Bar dataKey="count" fill="#FDB933" />
           </BarChart>
         </ResponsiveContainer>
       </div>
