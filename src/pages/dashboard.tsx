@@ -123,7 +123,7 @@ export default function Dashboard() {
           </div>
           <input type="hidden" name="startDate" value={startDate || ''} />
           <input type="hidden" name="endDate" value={endDate || ''} />
-          <div className="flex-grow">
+          <div className="flex-grow custom-datepicker">
             <DatePicker
               selectsRange={true}
               startDate={startDate ? new Date(startDate * 1000) : undefined}
@@ -131,7 +131,7 @@ export default function Dashboard() {
               onChange={handleDateChange}
               isClearable={true}
               placeholderText="Select date range"
-              className="border border-neutral-300 rounded-md p-2 text-small text-neutral-900 focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent w-52"
+              className="w-52 border border-neutral-300 rounded-md p-2 text-sm text-neutral-900 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
             />
           </div>
           <div className="flex gap-4 ml-auto">

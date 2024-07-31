@@ -29,5 +29,12 @@
   h4 {
     @apply text-[24px];
   }
+
+  .custom-datepicker .react-datepicker__close-icon::before,
+  .custom-datepicker .react-datepicker__close-icon::after {
+    @apply bg-yellow-bee-200;
+    @apply text-neutral-800;
+    color: currentColor;
+  }
 }
 
