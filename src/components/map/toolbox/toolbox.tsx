@@ -1,4 +1,4 @@
-import React, { useState, ReactNode } from 'react'
+import React, { useState, ReactNode, useRef } from 'react'
 import Popover from '../../popover';
 import { GsmData, msgData, WifiData } from '../../../types';
 
@@ -6,6 +6,7 @@ interface ToolboxButtonProps {
   label: string;
   onClick?: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   children: ReactNode;
+  disabled?: boolean;
 }
 
 interface ToolboxProps {
@@ -17,12 +18,14 @@ interface ToolboxProps {
   relocatedPoint: { lat: number; lng: number; accuracy: number } | null;
 }
 
-const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children }) => {
+const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children, disabled = false }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const buttonRef = useRef<HTMLDivElement>(null);
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    setIsOpen(!isOpen);
+    if (disabled) return;
     if (onClick) onClick(e);
+    setIsOpen(!isOpen);
   };
 
   const handleClose = () => {
@@ -30,23 +33,30 @@ const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children 
   };
 
   return (
-    <div className="relative flex-1">
+    <div className="relative flex-1" ref={buttonRef}>
       <button
-        className="w-full p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300"
+        className={`w-full p-2 flex items-center justify-center rounded-md ${disabled
+          ? 'bg-orange-150 cursor-not-allowed text-neutral-400'
+          : 'bg-yellow-bee-300 hover:bg-yellow-bee-100 cursor-pointer text-neutral-800'
+          } transition duration-300`}
         onClick={handleClick}
+        disabled={disabled}
       >
-        <p className='text-button-bold text-neutral-800 truncate'>{label}</p>
+        <p className='text-button-bold truncate'>{label}</p>
       </button>
-      <Popover isOpen={isOpen} onClose={handleClose}>
-        {children}
-      </Popover>
+      {isOpen && !disabled && (
+        <Popover isOpen={isOpen} onClose={handleClose} parentRef={buttonRef}>
+          {children}
+        </Popover>
+      )}
     </div>
   );
 };
 
 const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, mute, relocate, setRelocatedPoint, relocatedPoint }) => {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  // const [showDropdown, setShowDropdown] = useState(false);
+
+  const isDisabled = filteredData.length > 1 || data.length === 0 || filteredData.length === 0;
 
   const handleItemClick = (index: number) => {
     setSelectedItems(prev =>
@@ -56,14 +66,11 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, mute, relocate, s
 
   const handleMuteOrRelocate = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault()
-    // early return when no more than 1 message rendered. 
-    // Remember, this action is only available when inspecting a single message
-    // TODO: UX Feedback for this instead of silent return
-    console.log(filteredData, data)
-    if (filteredData.length > 1 || data.length === 0 || filteredData.length === 0) {
+    if (isDisabled) {
       console.log("Cannot mute or relocate: Invalid data state");
       return;
     }
+    // Additional logic for mute or relocate if needed
   };
 
   const handleValidateSignal = () => {
@@ -79,51 +86,57 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, mute, relocate, s
   return (
     <div className='w-full sm:w-full md:w-2/3 lg:w-1/2 xl:w-1/3'>
       <div className="flex flex-row justify-between gap-2">
-        <ToolboxButton label="Mute or Relocate" onClick={handleMuteOrRelocate}>
-          <div>
-            <div className="grid grid-cols-2 gap-4">
-              {/* @ts-expect-error sql data parsing */}
-              {filteredData.length > 0 && JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData, index: number) => (
-                <div
-                  key={`het_point_${index}`}
-                  className={`text-center bg-yellow-bee-100 p-3 rounded-lg hover:bg-yellow-bee-200 transition duration-300 cursor-pointer ${selectedItems.includes(index) ? 'bg-yellow-bee-200 ring-2 ring-yellow-bee-400' : ''
-                    }`}
-                  onClick={() => handleItemClick(index)}
+        <ToolboxButton
+          label="Mute or Relocate"
+          onClick={handleMuteOrRelocate}
+          disabled={isDisabled}
+        >
+          {!isDisabled && filteredData.length > 0 && (
+            <div>
+              <div className="grid grid-cols-2 gap-4">
+                {/* @ts-expect-error sql data parsing */}
+                {JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData, index: number) => (
+                  <div
+                    key={`het_point_${index}`}
+                    className={`text-center bg-yellow-bee-100 p-3 rounded-lg hover:bg-yellow-bee-200 transition duration-300 cursor-pointer ${selectedItems.includes(index) ? 'bg-yellow-bee-200 ring-2 ring-yellow-bee-400' : ''
+                      }`}
+                    onClick={() => handleItemClick(index)}
+                  >
+                    <p className="text-small-bold uppercase text-neutral-600">{msg.type}</p>
+                    <p className="text-caption text-neutral-900 truncate">
+                      {msg.type === 'gsm' ? msg.cid : msg.mac_address}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="p-4 border-t border-neutral-200 flex gap-4">
+                <button
+                  className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-800 text-button-bold rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={selectedItems.length === 0}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.preventDefault();
+                    console.log(`Muting selected items: ${selectedItems}`);
+                    mute(filteredData, selectedItems);
+                  }}
                 >
-                  <p className="text-small-bold uppercase text-neutral-600">{msg.type}</p>
-                  <p className="text-caption text-neutral-900 truncate">
-                    {msg.type === 'gsm' ? msg.cid : msg.mac_address}
-                  </p>
-                </div>
-              ))}
+                  Mute Selected ({selectedItems.length})
+                </button>
+                <button
+                  className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-yellow-bee-800 text-button-bold rounded-md transition duration-300"
+                  onClick={() => {
+                    if (relocatedPoint) {
+                      setRelocatedPoint(null);
+                    } else {
+                      const result = relocate(filteredData);
+                      setRelocatedPoint(result);
+                    }
+                  }}
+                >
+                  {relocatedPoint ? 'Hide Relocation' : 'Relocate'}
+                </button>
+              </div>
             </div>
-            <div className="p-4 border-t border-neutral-200 flex gap-4">
-              <button
-                className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-800 text-button-bold rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={selectedItems.length === 0}
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  e.preventDefault();
-                  console.log(`Muting selected items: ${selectedItems}`);
-                  mute(filteredData, selectedItems);
-                }}
-              >
-                Mute Selected ({selectedItems.length})
-              </button>
-              <button
-                className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-yellow-bee-800 text-button-bold rounded-md transition duration-300"
-                onClick={() => {
-                  if (relocatedPoint) {
-                    setRelocatedPoint(null);
-                  } else {
-                    const result = relocate(filteredData);
-                    setRelocatedPoint(result);
-                  }
-                }}
-              >
-                {relocatedPoint ? 'Hide Relocation' : 'Relocate'}
-              </button>
-            </div>
-          </div>
+          )}
         </ToolboxButton>
 
         <ToolboxButton label="Validate Signal" onClick={handleValidateSignal}>

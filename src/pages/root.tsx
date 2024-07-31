@@ -8,23 +8,48 @@ import mapIcon from '../assets/mapIcon.png';
 
 export default function Root() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
 
-  const iconStyling = `w-6 h-6 transition-all duration-300`;
+  const iconStyling = `${isCollapsed ? 'w-7 h-7' : 'w-8 h-8'} transition-all duration-300`;
   const textStyling = `block px-6 text-title text-neutral-800 transition-all duration-300 ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'}`;
-  const linkStyling = `p-2 w-full flex items-center transition-all duration-300 hover:bg-yellow-bee-400`;
+  const linkStyling = `relative group p-2 ${isCollapsed ? 'pl-4' : 'pl-6'} w-full flex items-center transition-all duration-300 hover:bg-yellow-bee-200`;
+
+  const StyledLink = (to: string, icon: string, text: string) => {
+    console.log(`activeTooltip?: ${activeTooltip}`);
+    return (
+      <Link
+        to={to}
+        className={linkStyling}
+        onMouseEnter={() => setActiveTooltip(text)}
+        onMouseLeave={() => setActiveTooltip(null)}
+      >
+        <img src={icon} alt={text} className={iconStyling} />
+        <span className={textStyling}>{text}</span>
+        {isCollapsed && activeTooltip !== null && (
+          <div className="absolute left-full ml-2 z-10">
+            <div className="bg-neutral-900 text-neutral-000 rounded-md py-1 px-2 text-small whitespace-nowrap">
+              {text}
+            </div>
+            <div className="absolute top-1/2 -left-1 w-0 h-0 border-t-4 border-r-4 border-b-4 border-t-transparent border-r-neutral-900 border-b-transparent -translate-y-1/2"></div>
+          </div>
+        )}
+      </Link>
+    )
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <div className={`bg-neutral-000 ${isCollapsed ? 'w-16' : 'w-64'} border-r border-neutral-300 overflow-y-auto transition-width duration-300`}>
-        <div className="flex items-start p-4">
+      <div className={`bg-neutral-000 ${isCollapsed ? 'w-16' : 'w-60'} border-r border-neutral-300 overflow-y-auto transition-width duration-300`}>
+        <div className="flex items-start py-4">
           <Link to="/">
             <img src={RBlogo} alt="RB Logo" className={`cursor-pointer transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-36'}`} />
           </Link>
-          <button onClick={toggleSidebar} className="ml-auto focus:outline-none">
+          <button onClick={toggleSidebar} className={`focus:outline-none ${isCollapsed ? 'mx-auto' : 'ml-auto'}`}>
             <svg
               className="w-6 h-6 text-neutral-800"
               fill="none"
@@ -41,20 +66,11 @@ export default function Root() {
             </svg>
           </button>
         </div>
-        <div >
+        <div className="mt-4">
           <nav>
-            <Link to="/" className={linkStyling}>
-              <img src={homeIcon} alt="Home" className={iconStyling} />
-              <span className={textStyling}>Home</span>
-            </Link>
-            <Link to="/dashboard" className={linkStyling}>
-              <img src={dashboardIcon} alt="Dashboard" className={iconStyling} />
-              <span className={textStyling}>Dashboard</span>
-            </Link>
-            <Link to="/map" className={linkStyling}>
-              <img src={mapIcon} alt="Map" className={iconStyling} />
-              <span className={textStyling}>Map</span>
-            </Link>
+            {StyledLink("/", homeIcon, "Home")}
+            {StyledLink("/dashboard", dashboardIcon, "Dashboard")}
+            {StyledLink("/map", mapIcon, "Map")}
           </nav>
         </div>
       </div>
