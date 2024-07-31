@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import L from 'leaflet';
 import { useMap } from 'react-leaflet';
-import { msgData } from '../../types';
-import { InspectedUuid } from './locationImpactMap';
+import { msgData, GpsData, WifiData, GsmData } from '../../../types';
+import { InspectedUuid } from '../locationImpactMap';
 
 interface BoundsUpdaterProps {
   inspectedUuid: InspectedUuid | null;
@@ -21,7 +21,7 @@ const BoundsUpdater: React.FC<BoundsUpdaterProps> = ({ data, inspectedUuid }) =>
     if (inspectedUuid) {
       // If we have an inspected UUID, focus on its data
       const inspectedData = JSON.parse(inspectedUuid.msgData.data);
-      bounds = inspectedData.reduce((acc: L.LatLngBounds, point: any) => {
+      bounds = inspectedData.reduce((acc: L.LatLngBounds, point: GpsData | WifiData | GsmData) => {
         if (point.lat && point.lng) {
           return acc.extend([point.lat, point.lng]);
         }
