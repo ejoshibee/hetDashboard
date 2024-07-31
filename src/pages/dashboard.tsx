@@ -105,28 +105,25 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col h-screen">
-      <div className="sticky top-0 bg-white z-10 p-2 shadow-md">
-        <div className="mb-2 flex items-center">
-          <Form method="get" action="/dashboard">
-            <label className="mr-2 font-lg font-semibold">IMEI:</label>
+      <div className="sticky top-0 bg-neutral-000 z-10 p-4 shadow-md">
+        <Form method="get" action="/dashboard" className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center">
+            <label htmlFor="imei" className="text-small-bold text-neutral-800 mr-2">
+              <h4>IMEI:</h4>
+            </label>
             <input
+              id="imei"
               type="text"
               name="imei"
               value={imei || ''}
               onChange={handleImeiChange}
               placeholder={imei ? imei : "Enter device imei..."}
-              className="border rounded p-1 mr-2"
+              className="border border-neutral-300 rounded-md p-2 text-small text-neutral-900 focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent w-full"
             />
-            <input
-              type="hidden"
-              name="startDate"
-              value={startDate || ''}
-            />
-            <input
-              type="hidden"
-              name="endDate"
-              value={endDate || ''}
-            />
+          </div>
+          <input type="hidden" name="startDate" value={startDate || ''} />
+          <input type="hidden" name="endDate" value={endDate || ''} />
+          <div className="flex-grow">
             <DatePicker
               selectsRange={true}
               startDate={startDate ? new Date(startDate * 1000) : undefined}
@@ -134,22 +131,24 @@ export default function Dashboard() {
               onChange={handleDateChange}
               isClearable={true}
               placeholderText="Select date range"
-              className="border rounded p-1 mr-2"
+              className="border border-neutral-300 rounded-md p-2 text-small text-neutral-900 focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent w-52"
             />
+          </div>
+          <div className="flex gap-4 ml-auto">
             <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
+              className="p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300 min-w-[120px]"
             >
-              View Data
+              <p className='text-button-bold text-neutral-800 truncate'>View Data</p>
             </button>
-          </Form>
-          <button
-            onClick={dashboardSendToMap}
-            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-          >
-            Send to Map
-          </button>
-        </div>
+            <button
+              onClick={dashboardSendToMap}
+              className="p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300 min-w-[120px]"
+            >
+              <p className='text-button-bold text-neutral-800 truncate'>Send to Map</p>
+            </button>
+          </div>
+        </Form>
       </div>
       <div className="flex-grow overflow-y-auto p-4">
         <Suspense fallback={<div className="text-gray-500 font-semibold">Loading...</div>}>

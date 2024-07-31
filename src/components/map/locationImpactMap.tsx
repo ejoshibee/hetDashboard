@@ -248,7 +248,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
               className="p-2 flex items-center justify-center rounded-md bg-yellow-bee-200 hover:bg-orange-200 cursor-pointer transition duration-300"
               onClick={handleMuteOrRelocate}
             >
-              <p className='text-button-bold text-yellow-bee-800 truncate'>Mute or Relocate Geo</p>
+              <p className='text-button-bold text-neutral-800 truncate'>Mute or Relocate Geo</p>
             </button>
 
             {/* BREAK THIS AWAY INTO CUSTOM DROPDOWN COMPONENT */}
