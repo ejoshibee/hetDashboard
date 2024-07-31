@@ -118,7 +118,7 @@ export default function Dashboard() {
               value={imei || ''}
               onChange={handleImeiChange}
               placeholder={imei ? imei : "Enter device imei..."}
-              className="border border-neutral-300 rounded-md p-2 text-small text-neutral-900 focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent w-full"
+              className="w-full border border-neutral-300 rounded-md p-2 text-small text-neutral-900 focus:outline-none focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent"
             />
           </div>
           <input type="hidden" name="startDate" value={startDate || ''} />
@@ -131,7 +131,7 @@ export default function Dashboard() {
               onChange={handleDateChange}
               isClearable={true}
               placeholderText="Select date range"
-              className="w-52 border border-neutral-300 rounded-md p-2 text-sm text-neutral-900 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+              className="w-52 border border-neutral-300 rounded-md p-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent"
             />
           </div>
           <div className="flex gap-4 ml-auto">

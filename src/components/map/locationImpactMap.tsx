@@ -315,7 +315,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
         <MapContainer
           center={[0, 0]}
           zoom={2}
-          style={{ height: '100%', width: '100%', zIndex: 1 }}
+          className='h-full w-full z-1'
           scrollWheelZoom={true}
         >
           <TileLayer

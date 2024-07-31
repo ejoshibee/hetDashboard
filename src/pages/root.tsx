@@ -5,7 +5,9 @@ export default function Root() {
   return (
     <div className="flex h-screen overflow-hidden">
       <div className="bg-yellow-bee-50 w-64 border-r border-neutral-300 overflow-y-auto">
-        <img src={RBlogo} alt="RB Logo" />
+        <Link to="/">
+          <img src={RBlogo} alt="RB Logo" className="cursor-pointer" />
+        </Link>
         <div className="p-6">
           <nav className="space-y-6">
             <Link to="/" className="block text-title text-neutral-800 hover:text-oceanic-blue-600 transition duration-300">Home</Link>
