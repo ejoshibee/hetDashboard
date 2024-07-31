@@ -58,30 +58,27 @@ export default function Map() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
+      <div className="px-4 py-3 flex justify-between items-center border-b border-neutral-200">
+        <h1 className="text-title-bold text-neutral-900">
           {bin ? `Map view for bin ${bin}` :
             imei ? `No bin selected. Viewing imei: ${imei}` :
               uuid ? `Viewing map for UUID: ${uuid}` :
                 `No bin, imei, or uuid selected. Search for a message`}
         </h1>
         <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold my-2 py-2 px-4 rounded"
+          className="bg-yellow-bee-200 hover:bg-yellow-bee-400 text-neutral-000 text-button-bold py-2 px-4 rounded-md transition duration-300"
           onClick={handleNavToDashboard}
         >
           View on dashboard
         </button>
       </div>
-      <div className='flex-1 overflow-hidden'>
-        <Suspense fallback={<div>Loading map data...</div>}>
+      <div className="flex-1 overflow-hidden">
+        <Suspense fallback={<div className="text-small text-neutral-600 p-4">Loading map data...</div>}>
           <Await
             resolve={data}
-            errorElement={<div>Error loading map data</div>}
+            errorElement={<div className="text-small text-red-400 p-4">Error loading map data</div>}
           >
             {(resolvedData: msgData[]) => {
-              // Check if we have data in location state
-              // If we do, we navigated from dashboard to map with 
-              // filtered data. return impactMap with state data
               const navState = location.state?.mapData;
               console.log(`Data from navstate: ${navState}`);
               if (navState) {
@@ -89,9 +86,6 @@ export default function Map() {
                   <LocationImpactMap data={navState} uuidView={false} />
                 );
               }
-              // Otherwise, return the impactMap with data fetched 
-              // from loader, meaning we accessed Map via a deep link
-              // or directly to search for msg_uuids
               return (
                 <LocationImpactMap data={resolvedData} uuidView={true} />
               );
