@@ -68,6 +68,14 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     });
   }, []);
 
+  // func to handle the marker click to inspect a msg
+  const handleMarkerClick = useCallback((uuid: string, msg: msgData) => {
+    setInspectedUuid(prevInspected =>
+      prevInspected?.uuid === uuid ? null : { uuid, msgData: msg }
+    );
+  }, []);
+
+
   // func to render markers and other geo objects for a msg
   const renderMarkers = useCallback((msg: msgData) => {
     const heteroGeo = JSON.parse(msg.heterogenous_geo);
@@ -206,13 +214,6 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
         : [...prevSelected, index]
     );
   };
-
-  // func to handle the marker click to inspect a msg
-  const handleMarkerClick = useCallback((uuid: string, msg: msgData) => {
-    setInspectedUuid(prevInspected =>
-      prevInspected?.uuid === uuid ? null : { uuid, msgData: msg }
-    );
-  }, []);
 
   // func to render all markers from constructured filteredData
   const renderAllMarkers = () => {
