@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, MutableRefObject } from 'react';
 import {
   BarChart,
   Bar,
@@ -8,12 +8,13 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import { msgData } from '../types';
+import { msgData, Bin } from '../types';
 import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
-type Bin = { bin: string; count: number; gsmCount: number; wifiCount: number; gpsCount: number; gsmCont: number; wifiCont: number; gpsCont: number; items: msgData[] };
+import { handleSendToMap } from '../lib/navHelpers';
 
-const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number } }) => {
+
+const TopBucketsBox: React.FC<{ binData: { bins: Bin[]; totalCount: number } }> = ({ binData }) => {
   const sortedBins = [...binData.bins].sort((a, b) => b.count - a.count);
   const topBins = sortedBins.slice(0, 5);
   const totalCount = binData.totalCount;
@@ -44,9 +45,7 @@ const TopBucketsBox = ({ binData }: { binData: { bins: Bin[]; totalCount: number
   );
 };
 
-const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ data, imei }) => {
-  console.log("data fetched", data, imei)
-
+const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, filteredDataRef: MutableRefObject<msgData[] | null> }> = ({ data, imei, filteredDataRef }) => {
   const [binWidth, setBinWidth] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
@@ -56,18 +55,21 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
   const navigate = useNavigate()
 
   const binData = useMemo(() => {
-    console.log("building chart")
-
     const bins: Bin[] = [];
     let totalCount = 0;
 
+    // filter by msgGeo.heteroLookup if showHetOnly is true
     const filteredData = showHetOnly
       ? data.filter(item => {
-        return item.msg_geo !== null
-          && Object.prototype.hasOwnProperty.call(item.msg_geo, "heterogenousLookup")
-          && (item.msg_geo).heterogenousLookup === true
+        const msgGeo = JSON.parse(item.msg_geo)
+        return msgGeo !== null
+          && Object.prototype.hasOwnProperty.call(msgGeo, "heterogenousLookup")
+          && msgGeo.heterogenousLookup === true
       })
       : data;
+
+    // set the filteredData as data for filteredDataRef from dashboard
+    filteredDataRef.current = filteredData
 
     for (const item of filteredData) {
       const km = item.delta_distance / 1000;
@@ -121,7 +123,6 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
 
     const usefulBins = bins.filter((bin) => bin !== undefined);
 
-    console.log("Histogram built");
     setIsBuilding(false);
 
     return { bins: usefulBins, totalCount };
@@ -143,13 +144,15 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
     setShowModal(true);
   };
 
-  const handleSendToMap = () => {
+  // Modal sendToMap
+  const modalSentToMap = () => {
     if (selectedBin) {
-      localStorage.setItem('map-data', JSON.stringify(selectedBin.items));
-      if (imei) {
-        localStorage.setItem(`map-data-${imei}`, JSON.stringify(selectedBin.items))
-      }
-      navigate(`/map?bin=${encodeURIComponent(selectedBin.bin)}&imei=${imei ? imei : ''}`);
+      handleSendToMap({
+        navigate,
+        data: selectedBin.items,
+        imei: imei,
+        binLabel: selectedBin.bin
+      });
     }
   };
 
@@ -159,7 +162,6 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
-    console.log(payload[0])
     if (active && payload && payload.length) {
       const count = payload[0].value;
       const percentage = ((count / binData.totalCount) * 100).toFixed(4);
@@ -184,10 +186,11 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
     return null;
   };
 
+  // suppress recharts X and Y axis errors
   useEffect(() => {
     const originalConsoleError = console.error;
 
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       if (typeof args[0] === "string" && /defaultProps/.test(args[0])) {
         return;
       }
@@ -200,15 +203,14 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
     };
   }, []);
 
-  // render a loading state while we compute the bindata for histogram
   if (isBuilding) {
     return <div className="text-gray-500 font-semibold">Building histogram...</div>;
   }
 
   return (
-    <div className="relative">
+    <div className="mb-8">
       <div className="mb-6 flex flex-col md:flex-row justify-between">
-        <div className="h-full flex flex-col justify-center">
+        <div className="h-full flex flex-col justify-center mb-4 md:mb-0">
           <h2 className="text-2xl font-bold mb-2">Delta Distance Histogram</h2>
           <div className="flex items-center">
             <label className="mr-2">Bin Width (km):</label>
@@ -225,7 +227,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
                 onChange={(e) => setShowHetOnly(e.target.checked)}
                 className="mr-2"
               />
-              Show Heterogeneous Lookup Only
+              Show HeteroLookup Only
             </label>
           </div>
         </div>
@@ -251,7 +253,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string }> = ({ d
         </ResponsiveContainer>
       </div>
       {showModal && selectedBin && (
-        <Modal binData={selectedBin} onClose={handleModalClose} handleSendToMap={handleSendToMap} />
+        <Modal binData={selectedBin} onClose={handleModalClose} handleSendToMap={modalSentToMap} />
       )}
     </div>
   );

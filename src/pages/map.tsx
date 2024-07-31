@@ -1,50 +1,74 @@
 import { Suspense } from 'react';
-import { defer, Await, useLoaderData, useSearchParams, useNavigate } from 'react-router-dom';
-import LocationImpactMap from '../components/locationImpactMap';
+import {
+  useSearchParams,
+  useNavigate,
+  useLocation,
+  defer,
+  useLoaderData,
+  Await,
+  LoaderFunctionArgs,
+} from 'react-router-dom';
+import LocationImpactMap from '../components/map/locationImpactMap';
+import { msgData } from '../types';
 
-export const loader = async ({ request }: { request: Request }) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const bin = url.searchParams.get('bin');
+  const uuid = url.searchParams.get('uuid');
+  const startDate = url.searchParams.get('startDate');
+  const endDate = url.searchParams.get('endDate');
 
-  const imei = url.searchParams.get('imei')
-  console.log(`imei: ${imei}`)
+  console.log(`UUID: ${uuid}, Start Date: ${startDate}, End Date: ${endDate}`);
 
-  if (!bin && !imei) {
-    return defer({ success: false, error: "No bin or imei provided" });
+  if (uuid !== null) {
+    const dataPromise = fetch(`/api/heterogenous_lookup/${uuid}?startDate=${startDate}&endDate=${endDate}`).then(async (resp) => {
+      if (resp.status === 404) {
+        console.log('No data found for the given criteria');
+        throw new Response('No data found for the given criteria', { status: 404 });
+      }
+      const data = await resp.json();
+      return data.data;
+    });
+
+    return defer({
+      data: dataPromise,
+    });
   }
-
-  let mapData = localStorage.getItem('map-data')
-  if (localStorage.getItem(`map-data-${imei}`)) {
-    mapData = localStorage.getItem(`map-data-${imei}`);
-  }
-
-  if (!mapData) {
-    return defer({ success: false, error: "No data found for this bin" });
-  }
-
-  console.log(`mapData found for bin ${bin}`);
-  return defer({ success: true, data: JSON.parse(mapData) });
+  return defer({ data: Promise.resolve([]) });
 };
 
 export default function Map() {
-  const data = useLoaderData();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
   const bin = searchParams.get('bin');
-  const imei = searchParams.get('imei')
+  const imei = searchParams.get('imei');
+  const startDate = searchParams.get('startDate');
+  const endDate = searchParams.get('endDate');
+  const uuid = searchParams.get('uuid');
 
-  const handleNavClick = () => {
-    // console.log(imei)
-    navigate(`/dashboard?imei=${imei ? imei : ""}`)
-  }
+  const { data } = useLoaderData() as { data: Promise<msgData[] | []> };
 
+  const handleNavToDashboard = () => {
+    let url = `/dashboard?imei=${imei ? imei : ""}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+    navigate(url);
+  };
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Map View for Bin: {bin}</h1>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold my-2 py-2 px-4 rounded"
-          onClick={handleNavClick}>
+      <div className="px-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">
+          {bin ? `Map view for bin ${bin}` :
+            imei ? `No bin selected. Viewing imei: ${imei}` :
+              uuid ? `Viewing map for UUID: ${uuid}` :
+                `No bin, imei, or uuid selected. Search for a message`}
+        </h1>
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold my-2 py-2 px-4 rounded"
+          onClick={handleNavToDashboard}
+        >
           View on dashboard
         </button>
       </div>
@@ -54,13 +78,24 @@ export default function Map() {
             resolve={data}
             errorElement={<div>Error loading map data</div>}
           >
-            {(resolvedData) =>
-              resolvedData.success ? (
-                <LocationImpactMap data={resolvedData.data} />
-              ) : (
-                <div className="text-red-500">{resolvedData.error}</div>
-              )
-            }
+            {(resolvedData: msgData[]) => {
+              // Check if we have data in location state
+              // If we do, we navigated from dashboard to map with 
+              // filtered data. return impactMap with state data
+              const navState = location.state?.mapData;
+              console.log(`Data from navstate: ${navState}`);
+              if (navState) {
+                return (
+                  <LocationImpactMap data={navState} uuidView={false} />
+                );
+              }
+              // Otherwise, return the impactMap with data fetched 
+              // from loader, meaning we accessed Map via a deep link
+              // or directly to search for msg_uuids
+              return (
+                <LocationImpactMap data={resolvedData} uuidView={true} />
+              );
+            }}
           </Await>
         </Suspense>
       </div>

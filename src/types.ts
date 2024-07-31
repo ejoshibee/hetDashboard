@@ -1,11 +1,11 @@
-interface GpsData {
+export interface GpsData {
   accuracy: number;
   lat: number;
   lng: number;
   type: 'gps';
   used?: boolean;
 }
-interface WifiData {
+export interface WifiData {
   mac_address: string;
   accuracy: number;
   lat: number;
@@ -14,7 +14,7 @@ interface WifiData {
   used?: boolean;
 }
 
-interface GsmData {
+export interface GsmData {
   cid: number;
   lac: number;
   mcc: number;
@@ -35,6 +35,7 @@ interface MsgGeo {
   accuracy: number;
   msg_source: string;
   heterogenousLookup: boolean;
+  source?: string;
 }
 
 interface HeterogenousGeo {
@@ -57,3 +58,14 @@ export interface msgData {
   delta_distance: number;
 }
 
+export type Bin = {
+  bin: string;
+  count: number;
+  gsmCount: number;
+  wifiCount: number;
+  gpsCount: number;
+  gsmCont: number;
+  wifiCont: number;
+  gpsCont: number;
+  items: msgData[]
+};

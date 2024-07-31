@@ -13,6 +13,7 @@ dist-ssr
 *.local
 *.md
 !README.md
+.env
 
 # Editor directories and files
 .vscode/*

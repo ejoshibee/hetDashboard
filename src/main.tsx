@@ -10,7 +10,6 @@ import ErrorPage from './pages/error'
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-
 const router = createBrowserRouter([
   {
     path: '/',
@@ -24,7 +23,8 @@ const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <Dashboard />,
-        loader: dashLoader
+        loader: dashLoader,
+        errorElement: <ErrorPage />,
       },
       {
         path: 'map',
