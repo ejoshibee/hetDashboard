@@ -1,23 +1,33 @@
 import fs from 'fs';
 import pool from './db.js';
 import { query } from './db.js';
+import { createHash } from 'crypto';
 
 import { Hono } from 'hono';
+import { cache } from 'hono/cache'
+import { compress } from 'hono/compress'
 import { serve } from '@hono/node-server';
+
 import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static';
 
 
 const app = new Hono();
 
-
 app.use('*', cors({
 	origin: ['http://localhost:3005/*', 'http://localhost:3007', 'http://localhost:5175', '*'],
 	allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 	credentials: true,
 }))
+app.use('*', compress())
 
 app.use('/*', serveStatic({ root: '../statics' }))
+
+// Function to generate a cache key based on query parameters
+function generateCacheKey(imei, startDate, endDate, hetOnly) {
+  const data = `${imei}-${startDate}-${endDate}-${hetOnly}`
+  return createHash('md5').update(data).digest('hex')
+}
 
 
 const buildQuery = (imei, startDate, endDate) => {
@@ -58,41 +68,61 @@ const buildQuery = (imei, startDate, endDate) => {
 
 // Get all records
 app.get('/heterogenous_lookup', async (c) => {
-  const { imei, startDate, endDate, hetOnly } = c.req.query();
-  console.log('Query params:', { imei, startDate, endDate, hetOnly });
+  const { imei, startDate, endDate, hetOnly } = c.req.query()
+  console.log('Query params:', { imei, startDate, endDate, hetOnly })
 
   try {
     if (endDate && !startDate) {
-      return c.json({ error: 'End date provided without start date' }, 400);
+      return c.json({ error: 'End date provided without start date' }, 400)
     }
 
-    let { sql, params } = buildQuery(imei, startDate, endDate);
+    const cacheKey = generateCacheKey(imei, startDate, endDate, hetOnly)
+    const ifNoneMatch = c.req.header('If-None-Match')
+
+    // Check if the client's cached version is still valid
+    if (ifNoneMatch === `"${cacheKey}"`) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          'Cache-Control': 'public, max-age=86400',
+          'ETag': `"${cacheKey}"`
+        }
+      })
+    }
+
+    let { sql, params } = buildQuery(imei, startDate, endDate)
 
     // If hetOnly is true, add a condition to filter for heterogeneous lookups
     if (hetOnly === 'true') {
       sql += sql.includes('WHERE')
         ? ' AND JSON_EXTRACT(msg_geo, "$.heterogenousLookup") = true'
-        : ' WHERE JSON_EXTRACT(msg_geo, "$.heterogenousLookup") = true';
+        : ' WHERE JSON_EXTRACT(msg_geo, "$.heterogenousLookup") = true'
     }
 
-    const rows = await query(sql, params);
+    const rows = await query(sql, params)
 
     if (rows.length === 0) {
-      return c.json({ message: 'No records found' }, 404);
+      return c.json({ message: 'No records found' }, 404)
     }
 
-    console.log(`Number of rows fetched: ${rows.length}`);
+    console.log(`Number of rows fetched: ${rows.length}`)
 
-    return c.json({
+    const response = {
       message: 'Messages fetched successfully',
       data: rows
-    });
+    }
+
+    // Set caching headers
+    c.header('Cache-Control', 'public, max-age=86400')
+    c.header('ETag', `"${cacheKey}"`)
+
+    return c.json(response)
 
   } catch (err) {
-    console.error('Error in heterogenous_lookup:', err);
-    return c.json({ error: 'Internal server error', details: err.message }, 500);
+    console.error('Error in heterogenous_lookup:', err)
+    return c.json({ error: 'Internal server error', details: err.message }, 500)
   }
-});
+})
 
 // Get a single record by message uuid
 app.get('/heterogenous_lookup/:uuid', async (c) => {

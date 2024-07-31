@@ -1,4 +1,4 @@
-import { GsmData, msgData, WifiData, Bin } from "../types";
+import { GsmData, msgData, WifiData, Bin, GpsData } from "../types";
 
 class WeightedGeoCenter {
   private locations: { lat: number; lng: number; accuracy: number }[] = [];
@@ -12,11 +12,11 @@ class WeightedGeoCenter {
     this.data.forEach(item => {
       // @ts-expect-error parsing
       const hetData = JSON.parse(item.data)
-      hetData.forEach((point: GsmData | WifiData) => {
+      hetData.forEach((point: GsmData | WifiData | GpsData) => {
         // USING ALL POINTS, not just used: true
         this.locations.push({
-          lat: point.lat,
-          lng: point.lng,
+          lat: typeof point.lat === 'string' ? parseFloat(point.lat) : point.lat,
+          lng: typeof point.lng === 'string' ? parseFloat(point.lng) : point.lng,
           accuracy: point.accuracy
         });
       });
@@ -24,6 +24,7 @@ class WeightedGeoCenter {
   }
 
   private calculateDistances(): number[] {
+    console.log(`Process locations: ${JSON.stringify(this.locations, null, 2)}`)
     const distances: number[] = [];
     for (let i = 0; i < this.locations.length; i++) {
       for (let j = i + 1; j < this.locations.length; j++) {
@@ -76,11 +77,13 @@ class WeightedGeoCenter {
 
   addDataItem(item: msgData): void {
     this.data.push(item);
-    item.data.forEach(point => {
+    // @ts-expect-error parsing
+    const hetData = JSON.parse(item.data);
+    hetData.forEach((point: GsmData | WifiData | GpsData) => {
       if (point.used !== false) {
         this.locations.push({
-          lat: point.lat,
-          lng: point.lng,
+          lat: typeof point.lat === 'string' ? parseFloat(point.lat) : point.lat,
+          lng: typeof point.lng === 'string' ? parseFloat(point.lng) : point.lng,
           accuracy: point.accuracy
         });
       }
@@ -123,4 +126,3 @@ export const validatePoint = (point: GsmData | WifiData) => {
   // func can be used to look up point in count's database.
   console.log(`Point to validate: ${JSON.stringify(point, null, 2)}`)
 }
-

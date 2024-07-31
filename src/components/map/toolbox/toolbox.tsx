@@ -87,7 +87,7 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, mute, relocate, s
     <div className='w-full sm:w-full md:w-2/3 lg:w-1/2 xl:w-1/3'>
       <div className="flex flex-row justify-between gap-2">
         <ToolboxButton
-          label="Mute or Relocate"
+          label="Inspect Message"
           onClick={handleMuteOrRelocate}
           disabled={isDisabled}
         >

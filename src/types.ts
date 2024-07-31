@@ -1,7 +1,8 @@
+// So apparently, lat, lng are strings and require an extra parse
 export interface GpsData {
   accuracy: number;
-  lat: number;
-  lng: number;
+  lat: string;
+  lng: string;
   type: 'gps';
   used?: boolean;
 }

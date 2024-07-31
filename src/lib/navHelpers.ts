@@ -10,12 +10,7 @@ interface SendToMapParams {
 }
 
 export const handleSendToMap = ({ navigate, data, imei, binLabel, startDate, endDate }: SendToMapParams) => {
-  if (!imei) {
-    alert("Please select an IMEI to view");
-    return;
-  }
-
-  let url = `/map?imei=${imei}`;
+  let url = `/map?imei=${imei ? imei : ''}`;
   
   if (binLabel) {
     url += `&bin=${encodeURIComponent(binLabel)}`;
