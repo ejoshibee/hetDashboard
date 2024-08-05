@@ -1,7 +1,8 @@
-import React, { useState, ReactNode, useRef } from 'react'
-import Popover from '../../popover';
-import { GpsData, GsmData, msgData, WifiData } from '../../../types';
+import React, { ReactNode, useRef, useState } from 'react';
 import { Form } from 'react-router-dom';
+import { GpsData, GsmData, msgData, WifiData } from '../../../types';
+import { validate, relocate } from '../../../lib/mapHelpers';
+import Popover from '../../popover';
 
 interface ToolboxButtonProps {
   label: string;
@@ -14,7 +15,7 @@ interface ToolboxButtonProps {
 interface ToolboxProps {
   data: msgData[];
   filteredData: msgData[];
-  validate: (data: msgData[], selectedItems: number[]) => void;
+  setRelocatedPoint: (point: { lat: number; lng: number; accuracy: number }) => void;
 }
 
 const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children, disabled = false, variant }) => {
@@ -55,7 +56,8 @@ const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children,
 };
 
 
-const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, validate }) => {
+const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, setRelocatedPoint }) => {
+  console.log(filteredData)
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
   const isDisabled = filteredData.length > 1 || data.length === 0 || filteredData.length === 0;
@@ -109,7 +111,7 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, validate }) => {
                 placeholder="Enter longitude"
                 className="w-full mt-2 p-2 border border-neutral-300 rounded-md text-small text-neutral-900 focus:outline-none focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent"
               />
-              <button type="submit" className="mt-4 py-2 px-4 bg-blue-500 text-white rounded-md">Submit</button>
+              <button type="submit" onClick={() => setRelocatedPoint(relocate(filteredData))} className="mt-4 py-2 px-4 bg-yellow-bee-400 text-button rounded-md">Relocate</button>
             </Form>
           </div>
         </ToolboxButton>
@@ -122,10 +124,10 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, validate }) => {
           <div>
             <div className="grid grid-cols-2 gap-4">
               {/* @ts-expect-error sql data parsing */}
-              {JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData | GpsData, index: number) => (
+              {!isDisabled && JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData | GpsData, index: number) => (
                 <div
                   key={`het_point_${index}`}
-                  className={`text-center bg-yellow-bee-100 p-3 rounded-lg hover:bg-yellow-bee-200 transition duration-300 cursor-pointer ${selectedItems.includes(index) ? 'bg-yellow-bee-200 ring-2 ring-yellow-bee-400' : ''
+                  className={`text-button text-center bg-yellow-bee-100 p-3 rounded-lg hover:bg-yellow-bee-200 transition duration-300 cursor-pointer ${selectedItems.includes(index) ? 'bg-yellow-bee-200 ring-2 ring-yellow-bee-400' : ''
                     }`}
                   onClick={() => handleItemClick(index)}
                 >
@@ -136,9 +138,9 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, validate }) => {
                 </div>
               ))}
             </div>
-            <div className="p-4 border-t border-neutral-200 flex gap-4">
+            <div className="mt-2 p-4 border-t border-neutral-200 flex gap-4">
               <button
-                className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-800 text-button-bold rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-button flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-800 text-button-bold rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={selectedItems.length === 0}
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.preventDefault();

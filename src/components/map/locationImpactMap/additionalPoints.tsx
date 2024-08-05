@@ -1,6 +1,6 @@
-import React from 'react';
-import { Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
+import React from 'react';
+import { Circle, Marker, Popup } from 'react-leaflet';
 import { msgData } from '../../../types';
 
 // Function to create icon

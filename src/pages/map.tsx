@@ -53,6 +53,7 @@ export default function Map() {
     let url = `/dashboard?imei=${imei ? imei : ""}`;
     if (startDate) url += `&startDate=${startDate}`;
     if (endDate) url += `&endDate=${endDate}`;
+    console.log(`Navigating to: ${url}`);
     navigate(url);
   };
 

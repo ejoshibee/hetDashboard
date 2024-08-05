@@ -1,16 +1,16 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { Marker, MapContainer, TileLayer, Tooltip, useMap } from 'react-leaflet';
 import { LatLngExpression } from 'leaflet';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { MapContainer, Marker, TileLayer, Tooltip, useMap } from 'react-leaflet';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import Toolbox from './toolbox/toolbox';
-import BoundsUpdater from './locationImpactMap/boundsUpdates'
-import MsgUuidSelector from './locationImpactMap/uuidSelector';
+import BoundsUpdater from './locationImpactMap/boundsUpdates';
 import MarkerGroup from './locationImpactMap/customMarkerGroup';
+import SideDrawer from './locationImpactMap/sideDrawer';
+import MsgUuidSelector from './locationImpactMap/uuidSelector';
+import Toolbox from './toolbox/toolbox';
 
-import { relocate, validate } from '../../lib/mapHelpers'
 import { HeterogenousGeo, msgData, MsgGeo } from '../../types';
 
 export interface LocationImpactMapProps {
@@ -27,6 +27,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
   const [selectedUuids, setSelectedUuids] = useState<string[]>([]);
   const [inspectedUuid, setInspectedUuid] = useState<InspectedUuid | null>(null);
   const [relocatedPoint, setRelocatedPoint] = useState<{ lat: number, lng: number, accuracy: number } | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const mapRef = useRef<L.Map | null>(null);
 
@@ -40,7 +41,8 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
           return msgGeo.msg_source;
         }
       }
-    })));
+      return undefined;
+    }).filter((uuid): uuid is string => uuid !== undefined)));
   }, [data]);
 
   // Updated to accept a color parameter and dynamically set the iconUrl based on type
@@ -71,8 +73,12 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     setInspectedUuid(prevInspected =>
       prevInspected?.uuid === uuid ? null : { uuid, msgData: msg }
     );
+    // Add this line to center the map on the clicked marker
+    if (mapRef.current) {
+      const msgGeo = JSON.parse(msg.msg_geo as unknown as string);
+      mapRef.current.setView([msgGeo.lat, msgGeo.lng], 15);
+    }
   }, []);
-
 
   // Define the renderMarkers function
   const renderMarkers = useCallback((msg: msgData) => {
@@ -170,52 +176,64 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center bg-white shadow-md z-10">
+      <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center bg-white shadow-md z-30">
         <div className="w-full sm:w-2/3 mb-4 sm:mb-0 sm:mr-4">
           <MsgUuidSelector
             uuidView={uuidView}
             options={uniqueMsgUuids}
             onChange={setSelectedUuids}
           />
-        </div >
-
-        {/* Replace old toolbox with new Toolbox component */}
-        < Toolbox
-          data={data}
-          filteredData={filteredData}
-          validate={validate}
-        />
-      </div >
-
-      {/* MAP COMPONENT */}
-      < div className="flex-grow relative" >
-        <MapContainer
-          center={[0, 0]}
-          zoom={2}
-          style={{ height: '100%', width: '100%', zIndex: 1 }}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        </div>
+        <div className="z-50"> {/* Wrap Toolbox in a div with highest z-index */}
+          <Toolbox
+            data={data}
+            filteredData={filteredData}
+            setRelocatedPoint={setRelocatedPoint}
           />
-          {renderAllMarkers()}
-          {relocatedPoint && (
-            <Marker position={[relocatedPoint.lat, relocatedPoint.lng]} icon={getIcon('relocate')}>
-              <Tooltip>
-                <div>
-                  <h2>Relocated Point</h2>
-                  <p>Location: [lat: {relocatedPoint.lat}, lng: {relocatedPoint.lng}]</p>
-                  <p>Accuracy: {relocatedPoint.accuracy}m</p>
-                </div>
-              </Tooltip>
-            </Marker>
-          )}
-          <BoundsUpdater data={filteredData} inspectedUuid={inspectedUuid} />
-          <PerformanceOptimizer />
-        </MapContainer>
-      </div >
-    </div >
+        </div>
+        <button onClick={() => setIsDrawerOpen(!isDrawerOpen)} className="ml-auto text-gray-500 hover:text-gray-700">
+          {isDrawerOpen ? 'Close Drawer' : 'Open Drawer'}
+        </button>
+      </div>
+
+      {/* MAP COMPONENT AND DRAWER */}
+      <div className="flex-grow flex relative">
+        <div className={`transition-all duration-300 ease-in-out ${isDrawerOpen ? 'w-3/4' : 'w-full'} absolute inset-0 z-10`}>
+          <MapContainer
+            center={[0, 0]}
+            zoom={2}
+            style={{ height: '100%', width: '100%' }}
+            scrollWheelZoom={true}
+            ref={mapRef}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {renderAllMarkers()}
+            {relocatedPoint && (
+              <Marker position={[relocatedPoint.lat, relocatedPoint.lng]} icon={getIcon('relocate')}>
+                <Tooltip>
+                  <div>
+                    <h2>Relocated Point</h2>
+                    <p>Location: [lat: {relocatedPoint.lat}, lng: {relocatedPoint.lng}]</p>
+                    <p>Accuracy: {relocatedPoint.accuracy}m</p>
+                  </div>
+                </Tooltip>
+              </Marker>
+            )}
+            <BoundsUpdater data={filteredData} inspectedUuid={inspectedUuid} />
+            <PerformanceOptimizer />
+          </MapContainer>
+        </div>
+        {/* SIDE DRAWER */}
+        {isDrawerOpen && (
+          <div className="w-1/4 absolute right-0 top-0 bottom-0 bg-white shadow-lg z-20">
+            <SideDrawer data={filteredData} onClose={() => setIsDrawerOpen(false)} onItemClick={handleMarkerClick} />
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
