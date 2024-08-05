@@ -7,20 +7,20 @@ interface ToolboxButtonProps {
   onClick?: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   children: ReactNode;
   disabled?: boolean;
+  variant: "primary" | "secondary"
 }
 
 interface ToolboxProps {
   data: msgData[];
   filteredData: msgData[];
-  mute: (data: msgData[], selectedItems: number[]) => void;
-  relocate: (data: msgData[]) => { lat: number; lng: number; accuracy: number } | null;
-  setRelocatedPoint: React.Dispatch<React.SetStateAction<{ lat: number; lng: number; accuracy: number } | null>>;
-  relocatedPoint: { lat: number; lng: number; accuracy: number } | null;
+  validate: (data: msgData[], selectedItems: number[]) => void;
 }
 
-const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children, disabled = false }) => {
+const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children, disabled = false, variant }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const buttonRef = useRef<HTMLDivElement>(null);
+
+  const isprimary = variant === "primary"
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     if (disabled) return;
@@ -37,7 +37,7 @@ const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children,
       <button
         className={`w-full p-2 flex items-center justify-center rounded-md ${disabled
           ? 'bg-orange-150 cursor-not-allowed text-neutral-400'
-          : 'bg-yellow-bee-300 hover:bg-yellow-bee-100 cursor-pointer text-neutral-800'
+          : `${isprimary ? 'bg-yellow-bee-300 hover:bg-yellow-bee-100' : 'bg-neutral-200 hover:bg-neutral-300'} cursor-pointer text-neutral-800`
           } transition duration-300`}
         onClick={handleClick}
         disabled={disabled}
@@ -53,7 +53,7 @@ const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children,
   );
 };
 
-const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, mute, relocate, setRelocatedPoint, relocatedPoint }) => {
+const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, validate }) => {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
   const isDisabled = filteredData.length > 1 || data.length === 0 || filteredData.length === 0;
@@ -64,13 +64,13 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, mute, relocate, s
     );
   };
 
-  const handleMuteOrRelocate = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+  const handlevalidateOrRelocate = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault()
     if (isDisabled) {
-      console.log("Cannot mute or relocate: Invalid data state");
+      console.log("Cannot validate or relocate: Invalid data state");
       return;
     }
-    // Additional logic for mute or relocate if needed
+    // Additional logic for validate or relocate if needed
   };
 
   const handleValidateSignal = () => {
@@ -87,10 +87,22 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, mute, relocate, s
     <div className='w-full sm:w-full md:w-2/3 lg:w-1/2 xl:w-1/3'>
       <div className="flex flex-row justify-between gap-2">
         <ToolboxButton
-          label="Inspect Message"
-          onClick={handleMuteOrRelocate}
+          label="Relocate Message"
+          onClick={handlevalidateOrRelocate}
           disabled={isDisabled}
+          variant='primary'
         >
+          <div className="p-4">
+            <h3 className="text-lg font-semibold mb-2">Relocate Message</h3>
+            <p>Once a new location has been decided on, possibly allow for input of new lat,lng </p>
+            {/* Add more content for the Inspect Message popover */}
+          </div>
+        </ToolboxButton>
+
+        <ToolboxButton
+          label="Validate Signal"
+          onClick={handleValidateSignal}
+          variant='secondary'>
           {!isDisabled && filteredData.length > 0 && (
             <div>
               <div className="grid grid-cols-2 gap-4">
@@ -116,38 +128,21 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, mute, relocate, s
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                     e.preventDefault();
                     console.log(`Muting selected items: ${selectedItems}`);
-                    mute(filteredData, selectedItems);
+                    validate(filteredData, selectedItems);
                   }}
                 >
-                  Mute Selected ({selectedItems.length})
-                </button>
-                <button
-                  className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-yellow-bee-800 text-button-bold rounded-md transition duration-300"
-                  onClick={() => {
-                    if (relocatedPoint) {
-                      setRelocatedPoint(null);
-                    } else {
-                      const result = relocate(filteredData);
-                      setRelocatedPoint(result);
-                    }
-                  }}
-                >
-                  {relocatedPoint ? 'Hide Relocation' : 'Relocate'}
+                  Validated Selected ({selectedItems.length})
                 </button>
               </div>
             </div>
           )}
         </ToolboxButton>
 
-        <ToolboxButton label="Validate Signal" onClick={handleValidateSignal}>
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Validate Signal</h3>
-            <p>Add your validation options and controls here.</p>
-            {/* Add more content for the Validate Signal popover */}
-          </div>
-        </ToolboxButton>
-
-        <ToolboxButton label="Third Tool OTW!" onClick={handleThirdTool}>
+        <ToolboxButton
+          label="Third Tool OTW!"
+          onClick={handleThirdTool}
+          variant='secondary'
+        >
           <div className="p-4">
             <h3 className="text-lg font-semibold mb-2">Third Tool</h3>
             <p>Content for the third tool goes here.</p>
