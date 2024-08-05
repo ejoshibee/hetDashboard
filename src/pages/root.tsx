@@ -16,7 +16,7 @@ export default function Root() {
   };
 
   const iconStyling = `${isCollapsed ? 'w-7 h-7' : 'w-8 h-8'} transition-all duration-300`;
-  const textStyling = `block px-6 text-title text-neutral-800 transition-all duration-300 ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'}`;
+  const textStyling = `block px-6 text-button text-neutral-800 transition-all duration-300  max-w-full ${isCollapsed ? 'opacity-0 overflow-hidden' : 'opacity-100'}`;
   const linkStyling = `relative group p-2 ${isCollapsed ? 'pl-4' : 'pl-6'} w-full flex items-center transition-all duration-300 hover:bg-yellow-bee-200`;
 
   const StyledLink = (to: string, icon: string, text: string) => {
@@ -27,11 +27,15 @@ export default function Root() {
           ${linkStyling}
           ${isActive ? 'bg-yellow-bee-200' : ''}
         `}
-        onMouseEnter={() => setActiveTooltip(text)}
+        onMouseEnter={() => {
+          console.log("hovering", text)
+          setActiveTooltip(text)
+        }}
         onMouseLeave={() => setActiveTooltip(null)}
       >
         <img src={icon} alt={text} className={iconStyling} />
         <span className={textStyling}>{text}</span>
+        {/* Tool tip */}
         {isCollapsed && activeTooltip === text && (
           <div className="absolute left-full ml-2 z-10">
             <div className="bg-neutral-900 text-neutral-000 rounded-md py-1 px-2 text-small whitespace-nowrap">
@@ -73,7 +77,7 @@ export default function Root() {
             {StyledLink("/", homeIcon, "Home")}
             {StyledLink("/dashboard", dashboardIcon, "Dashboard")}
             {StyledLink("/map", mapIcon, "Map")}
-            {StyledLink("/seconddimension", tempIcon, "Second Dimension")}
+            {StyledLink("/seconddimension", tempIcon, "2nd Dimension")}
             {StyledLink("/", tempIcon, "OTW!")}
             {StyledLink("/", tempIcon, "OTW!")}
           </nav>
