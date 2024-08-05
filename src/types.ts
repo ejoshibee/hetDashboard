@@ -27,7 +27,7 @@ export interface GsmData {
   used?: boolean;
 }
 
-interface MsgGeo {
+export interface MsgGeo {
   status: string;
   tech: string;
   lat: string;
@@ -39,7 +39,7 @@ interface MsgGeo {
   source?: string;
 }
 
-interface HeterogenousGeo {
+export interface HeterogenousGeo {
   lat: number;
   lng: number;
   accuracy: number;

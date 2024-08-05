@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import { msgData, Bin } from '../types';
+import { msgData, Bin, MsgGeo } from '../types';
 import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
 import { handleSendToMap } from '../lib/navHelpers';
@@ -62,7 +62,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
     // filter by msgGeo.heteroLookup if showHetOnly is true
     const filteredData = showHetOnly
       ? data.filter(item => {
-        const msgGeo = JSON.parse(item.msg_geo)
+        const msgGeo: MsgGeo = JSON.parse(item.msg_geo as unknown as string)
         return msgGeo !== null
           && Object.prototype.hasOwnProperty.call(msgGeo, "heterogenousLookup")
           && msgGeo.heterogenousLookup === true
@@ -97,7 +97,7 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
       let gsmCount = 0;
       let wifiCount = 0;
       let gpsCount = 0;
-      for (const dataPoint of JSON.parse(item.data)) {
+      for (const dataPoint of JSON.parse(item.data as unknown as string)) {
         if (dataPoint.type === 'gsm') {
           gsmCount++;
         } else if (dataPoint.type === 'wifi') {
@@ -107,7 +107,8 @@ const DeltaDistanceHistogram: React.FC<{ data: msgData[]; imei: string | null, f
         }
       }
       if (item.msg_geo) {
-        const techType = JSON.parse(item.msg_geo).tech;
+        const msgGeo: MsgGeo = JSON.parse(item.msg_geo as unknown as string)
+        const techType = msgGeo.tech;
         if (techType === 'gsm') {
           bins[binIndex].gsmCont++;
         } else if (techType === 'wifi') {
