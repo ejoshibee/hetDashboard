@@ -1,6 +1,7 @@
 import React, { useState, ReactNode, useRef } from 'react'
 import Popover from '../../popover';
-import { GsmData, msgData, WifiData } from '../../../types';
+import { GpsData, GsmData, msgData, WifiData } from '../../../types';
+import { Form } from 'react-router-dom';
 
 interface ToolboxButtonProps {
   label: string;
@@ -53,6 +54,7 @@ const ToolboxButton: React.FC<ToolboxButtonProps> = ({ label, onClick, children,
   );
 };
 
+
 const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, validate }) => {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
@@ -96,52 +98,65 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, validate }) => {
             <h3 className="text-lg font-semibold mb-2">Relocate Message</h3>
             <p>Once a new location has been decided on, possibly allow for input of new lat,lng </p>
             {/* Add more content for the Inspect Message popover */}
+            <Form navigate={false}>
+              <input
+                type="text"
+                placeholder="Enter latitude"
+                className="w-full mt-2 p-2 border border-neutral-300 rounded-md text-small text-neutral-900 focus:outline-none focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent"
+              />
+              <input
+                type="text"
+                placeholder="Enter longitude"
+                className="w-full mt-2 p-2 border border-neutral-300 rounded-md text-small text-neutral-900 focus:outline-none focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent"
+              />
+              <button type="submit" className="mt-4 py-2 px-4 bg-blue-500 text-white rounded-md">Submit</button>
+            </Form>
           </div>
         </ToolboxButton>
 
         <ToolboxButton
           label="Validate Signal"
-          onClick={handleValidateSignal}
-          variant='secondary'>
-          {!isDisabled && filteredData.length > 0 && (
-            <div>
-              <div className="grid grid-cols-2 gap-4">
-                {/* @ts-expect-error sql data parsing */}
-                {JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData, index: number) => (
-                  <div
-                    key={`het_point_${index}`}
-                    className={`text-center bg-yellow-bee-100 p-3 rounded-lg hover:bg-yellow-bee-200 transition duration-300 cursor-pointer ${selectedItems.includes(index) ? 'bg-yellow-bee-200 ring-2 ring-yellow-bee-400' : ''
-                      }`}
-                    onClick={() => handleItemClick(index)}
-                  >
-                    <p className="text-small-bold uppercase text-neutral-600">{msg.type}</p>
-                    <p className="text-caption text-neutral-900 truncate">
-                      {msg.type === 'gsm' ? msg.cid : msg.mac_address}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <div className="p-4 border-t border-neutral-200 flex gap-4">
-                <button
-                  className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-800 text-button-bold rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={selectedItems.length === 0}
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                    e.preventDefault();
-                    console.log(`Muting selected items: ${selectedItems}`);
-                    validate(filteredData, selectedItems);
-                  }}
+          variant='secondary'
+          disabled={isDisabled}
+        >
+          <div>
+            <div className="grid grid-cols-2 gap-4">
+              {/* @ts-expect-error sql data parsing */}
+              {JSON.parse(filteredData[0].data).map((msg: GsmData | WifiData | GpsData, index: number) => (
+                <div
+                  key={`het_point_${index}`}
+                  className={`text-center bg-yellow-bee-100 p-3 rounded-lg hover:bg-yellow-bee-200 transition duration-300 cursor-pointer ${selectedItems.includes(index) ? 'bg-yellow-bee-200 ring-2 ring-yellow-bee-400' : ''
+                    }`}
+                  onClick={() => handleItemClick(index)}
                 >
-                  Validated Selected ({selectedItems.length})
-                </button>
-              </div>
+                  <p className="text-small-bold uppercase text-neutral-600">{msg.type}</p>
+                  <p className="text-caption text-neutral-900 truncate">
+                    {msg.type === 'gsm' ? msg.cid : msg.type === 'wifi' ? msg.mac_address : 'gps nonsense'}
+                  </p>
+                </div>
+              ))}
             </div>
-          )}
+            <div className="p-4 border-t border-neutral-200 flex gap-4">
+              <button
+                className="flex-1 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-800 text-button-bold rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={selectedItems.length === 0}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.preventDefault();
+                  console.log(`Muting selected items: ${selectedItems}`);
+                  validate(filteredData, selectedItems);
+                }}
+              >
+                Validated Selected ({selectedItems.length})
+              </button>
+            </div>
+          </div>
         </ToolboxButton>
 
         <ToolboxButton
           label="Third Tool OTW!"
           onClick={handleThirdTool}
           variant='secondary'
+          disabled={isDisabled}
         >
           <div className="p-4">
             <h3 className="text-lg font-semibold mb-2">Third Tool</h3>
