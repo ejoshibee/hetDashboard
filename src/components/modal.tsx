@@ -1,5 +1,6 @@
 import React from 'react';
-import { Bin, GpsData, GsmData, WifiData } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { Bin, GsmData, GpsData, WifiData } from '../types';
 
 type ModalProps = {
   binData: Bin;
@@ -8,6 +9,12 @@ type ModalProps = {
 }
 
 const Modal: React.FC<ModalProps> = ({ binData, onClose, handleSendToMap }) => {
+  const navigate = useNavigate();
+
+  const handleNavigate = (uuid: string, imei: string) => {
+    navigate(`/map?uuid=${uuid}&imei=${imei}`);
+  };
+
   return (
     <div className="fixed z-10 inset-0 overflow-y-auto">
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -32,16 +39,26 @@ const Modal: React.FC<ModalProps> = ({ binData, onClose, handleSendToMap }) => {
                 <div className="mt-4 overflow-y-auto max-h-96">
                   {binData.items.sort((a, b) => b.delta_distance - a.delta_distance).map((item, index) => (
                     <div key={index} className="border-b border-neutral-300 py-4">
-                      <h4 className="text-small-bold text-neutral-900">{item.msg_uuid}</h4>
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-small-bold text-neutral-900">{item.msg_uuid}</h4>
+                        <button
+                          onClick={() => handleNavigate(item.msg_uuid, item.bee_imei)}
+                          className="p-1 rounded-full hover:bg-neutral-200 transition-colors duration-200"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                          </svg>
+                        </button>
+                      </div>
                       <div className="mt-2 text-small text-neutral-600">
                         <p>IMEI: {item.bee_imei}</p>
                         <p>Created Date: {new Date(item.created_date).toLocaleString()}</p>
                         <p>Delta Distance: {item.delta_distance}m</p>
                         <p>MSG Geo Distance: {item.msg_geo_distance}m</p>
                         <p>Heterogeneous Geo Distance: {item.heterogenous_geo_distance}m</p>
-                        <p>GSM Data: {JSON.parse(item.data).filter((d) => d.type === 'gsm').length}</p>
-                        <p>WiFi Data: {JSON.parse(item.data).filter((d) => d.type === 'wifi').length}</p>
-                        <p>GPS Data: {JSON.parse(item.data).filter((d) => d.type === 'gps').length}</p>
+                        <p>GSM Data: {JSON.parse(item.data).filter((d: GsmData) => d.type === 'gsm').length}</p>
+                        <p>WiFi Data: {JSON.parse(item.data).filter((d: WifiData) => d.type === 'wifi').length}</p>
+                        <p>GPS Data: {JSON.parse(item.data).filter((d: GpsData) => d.type === 'gps').length}</p>
                       </div>
                     </div>
                   ))}
