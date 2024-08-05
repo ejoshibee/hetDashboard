@@ -1,16 +1,17 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { Marker, MapContainer, TileLayer, Polyline, Tooltip, useMap } from 'react-leaflet';
+import { Marker, MapContainer, TileLayer, Tooltip, useMap } from 'react-leaflet';
+import { LatLngExpression } from 'leaflet';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import AdditionalPoints from './locationImpactMap/additionalPoints';
+import Toolbox from './toolbox/toolbox';
 import BoundsUpdater from './locationImpactMap/boundsUpdates'
 import MsgUuidSelector from './locationImpactMap/uuidSelector';
-import Toolbox from './toolbox/toolbox';
+import MarkerGroup from './locationImpactMap/customMarkerGroup';
 
-import { relocate, mute } from '../../lib/mapHelpers'
-import { msgData } from '../../types';
+import { relocate, validate } from '../../lib/mapHelpers'
+import { HeterogenousGeo, msgData, MsgGeo } from '../../types';
 
 export interface LocationImpactMapProps {
   uuidView: boolean;
@@ -34,7 +35,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     if (data.length === 0) return [];
     return Array.from(new Set(data.map(msg => {
       if (msg.msg_geo !== null) {
-        const msgGeo = JSON.parse(msg.msg_geo);
+        const msgGeo: MsgGeo = JSON.parse(msg.msg_geo as unknown as string)
         if (msgGeo.msg_source !== null) {
           return msgGeo.msg_source;
         }
@@ -73,66 +74,30 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
   }, []);
 
 
-  // func to render markers and other geo objects for a msg
+  // Define the renderMarkers function
   const renderMarkers = useCallback((msg: msgData) => {
-    const heteroGeo = JSON.parse(msg.heterogenous_geo);
-    const msgGeo = JSON.parse(msg.msg_geo);
+    const heteroGeo = JSON.parse(msg.heterogenous_geo as unknown as string);
+    const msgGeo = JSON.parse(msg.msg_geo as unknown as string);
+    console.log(`heterogenous_geo: ${typeof heteroGeo}\n msg_geo: ${typeof msgGeo}`)
 
-    const heteroPosition: L.LatLngExpression = [heteroGeo.lat, heteroGeo.lng];
-    if (msgGeo === null) return
-    const msgGeoPosition: L.LatLngExpression = [msgGeo.lat, msgGeo.lng];
+    if (msgGeo === null) return null;
 
-    const uuid = msgGeo.msg_source;
+    const heteroPosition: LatLngExpression = [heteroGeo.lat, heteroGeo.lng];
+    const msgGeoPosition: LatLngExpression = [parseFloat(msgGeo.lat), parseFloat(msgGeo.lng)];
+
+    const uuid = msg.msg_uuid;
 
     return (
-      <React.Fragment key={`group-${uuid}`}>
-        <Marker
-          position={heteroPosition}
-          icon={getIcon('hetero')}
-          eventHandlers={{ click: () => handleMarkerClick(uuid, msg) }}
-        // zIndexOffset={1000}
-        >
-          <Tooltip>
-            <div>
-              <h2>Heterogeneous Geo</h2>
-              <p>Location: [lat: {heteroGeo.lat}, lng: {heteroGeo.lng}]</p>
-              <p>Imei: {msg.bee_imei}</p>
-              <p>Msg_uuid: {msgGeo.msg_source}</p>
-              <p>Date: {msg.created_date}</p>
-              <p>Delta Distance: {msg.delta_distance}m</p>
-              <p>Accuracy: {heteroGeo.accuracy}m</p>
-              <p>GSM Count: {JSON.parse(msg.data).filter((d) => d.type === 'gsm').length}</p>
-              <p>WiFi Count: {JSON.parse(msg.data).filter((d) => d.type === 'wifi').length}</p>
-            </div>
-          </Tooltip>
-        </Marker>
-        <Marker
-          position={msgGeoPosition}
-          eventHandlers={{ click: () => handleMarkerClick(uuid, msg) }}
-          icon={getIcon(msgGeo.tech)}
-        >
-          <Tooltip>
-            <div>
-              <h2>Message Geo</h2>
-              <p>Tech: {msgGeo.tech.toUpperCase()}</p>
-              <p>IsHet: {msgGeo.heterogenousLookup ? "True" : "False"}</p>
-              <p>Imei: {msg.bee_imei}</p>
-              <p>Msg_uuid: {msgGeo.msg_source}</p>
-              <p>Delta Distance: {msg.delta_distance}m</p>
-              <p>Date: {msg.created_date}</p>
-              <p>Location: [lat: {msgGeo.lat}, lng: {msgGeo.lng}]</p>
-              <p>Reported Accuracy: {msgGeo.reported_accuracy}m</p>
-              <p>Actual Accuracy: {msgGeo.accuracy}m</p>
-            </div>
-          </Tooltip>
-        </Marker>
-        <Polyline positions={[msgGeoPosition, heteroPosition]} color="blue">
-          <Tooltip>{uuid}</Tooltip>
-        </Polyline>
-        {inspectedUuid?.uuid === uuid && (
-          <AdditionalPoints msg={msg} />
-        )}
-      </React.Fragment>
+      <MarkerGroup
+        key={`group-${uuid}`}
+        uuid={uuid}
+        msg={msg}
+        heteroPosition={heteroPosition}
+        msgGeoPosition={msgGeoPosition}
+        handleMarkerClick={handleMarkerClick}
+        getIcon={getIcon}
+        inspectedUuid={inspectedUuid}
+      />
     );
   }, [getIcon, handleMarkerClick, inspectedUuid]);
 
@@ -142,7 +107,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     // filter by onclick (inspectedUuid set onClick of marker)
     if (inspectedUuid) {
       return data.filter(msg => {
-        const msgGeo = JSON.parse(msg.msg_geo);
+        const msgGeo: MsgGeo | null = JSON.parse(msg.msg_geo as unknown as string);
         if (msgGeo === null || msgGeo === undefined) return
         return msgGeo.msg_source === inspectedUuid.uuid;
       });
@@ -151,7 +116,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
     // filter by uuid selector inputs
     if (selectedUuids.length === 0) return data;
     return data.filter(msg => {
-      const msgGeo = JSON.parse(msg.msg_geo);
+      const msgGeo: MsgGeo | null = JSON.parse(msg.msg_geo as unknown as string);
       if (msgGeo === null || msgGeo === undefined) return
       return selectedUuids.includes(msgGeo.msg_source);
     });
@@ -168,7 +133,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
         const bounds = map.getBounds();
         const zoom = map.getZoom();
         const visibleMarkers = filteredData.filter(msg => {
-          const heteroGeo = JSON.parse(msg.heterogenous_geo);
+          const heteroGeo: HeterogenousGeo = JSON.parse(msg.heterogenous_geo as unknown as string);
           return bounds.contains([heteroGeo.lat, heteroGeo.lng]);
         });
 
@@ -218,14 +183,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
         < Toolbox
           data={data}
           filteredData={filteredData}
-          mute={mute}
-          relocate={(data) => {
-            const result = relocate(data);
-            setRelocatedPoint(result);
-            return result;
-          }}
-          setRelocatedPoint={setRelocatedPoint}
-          relocatedPoint={relocatedPoint}
+          validate={validate}
         />
       </div >
 
