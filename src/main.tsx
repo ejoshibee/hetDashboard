@@ -7,6 +7,7 @@ import Map, { loader as mapLoader } from './pages/map'
 import Root from './pages/root'
 import Index from './pages/index'
 import ErrorPage from './pages/error'
+import SecondDimensionPage from './pages/seconddimension'
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
         path: 'map',
         element: <Map />,
         loader: mapLoader
+      },
+      {
+        path: 'seconddimension',
+        element: <SecondDimensionPage />,
       }
     ],
   },

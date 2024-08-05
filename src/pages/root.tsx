@@ -1,15 +1,15 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { useState } from 'react';
 
 import RBlogo from '../assets/RBlogo.svg';
 import homeIcon from '../assets/homeIcon.png';
 import dashboardIcon from '../assets/dashboardIcon.png';
 import mapIcon from '../assets/mapIcon.png';
+import tempIcon from '../assets/tempIcon.png'
 
 export default function Root() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
-
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -20,17 +20,19 @@ export default function Root() {
   const linkStyling = `relative group p-2 ${isCollapsed ? 'pl-4' : 'pl-6'} w-full flex items-center transition-all duration-300 hover:bg-yellow-bee-200`;
 
   const StyledLink = (to: string, icon: string, text: string) => {
-    console.log(`activeTooltip?: ${activeTooltip}`);
     return (
-      <Link
+      <NavLink
         to={to}
-        className={linkStyling}
+        className={({ isActive }) => `
+          ${linkStyling}
+          ${isActive ? 'bg-yellow-bee-200' : ''}
+        `}
         onMouseEnter={() => setActiveTooltip(text)}
         onMouseLeave={() => setActiveTooltip(null)}
       >
         <img src={icon} alt={text} className={iconStyling} />
         <span className={textStyling}>{text}</span>
-        {isCollapsed && activeTooltip !== null && (
+        {isCollapsed && activeTooltip === text && (
           <div className="absolute left-full ml-2 z-10">
             <div className="bg-neutral-900 text-neutral-000 rounded-md py-1 px-2 text-small whitespace-nowrap">
               {text}
@@ -38,7 +40,7 @@ export default function Root() {
             <div className="absolute top-1/2 -left-1 w-0 h-0 border-t-4 border-r-4 border-b-4 border-t-transparent border-r-neutral-900 border-b-transparent -translate-y-1/2"></div>
           </div>
         )}
-      </Link>
+      </NavLink>
     )
   };
 
@@ -47,7 +49,7 @@ export default function Root() {
       <div className={`bg-neutral-000 ${isCollapsed ? 'w-16' : 'w-60'} border-r border-neutral-300 overflow-y-auto transition-width duration-300`}>
         <div className="flex items-start py-4">
           <Link to="/">
-            <img src={RBlogo} alt="RB Logo" className={`cursor-pointer transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-36'}`} />
+            <img src={RBlogo} alt="RB Logo" className={`h-12 cursor-pointer transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-36'}`} />
           </Link>
           <button onClick={toggleSidebar} className={`focus:outline-none ${isCollapsed ? 'mx-auto' : 'ml-auto'}`}>
             <svg
@@ -71,6 +73,9 @@ export default function Root() {
             {StyledLink("/", homeIcon, "Home")}
             {StyledLink("/dashboard", dashboardIcon, "Dashboard")}
             {StyledLink("/map", mapIcon, "Map")}
+            {StyledLink("/seconddimension", tempIcon, "Second Dimension")}
+            {StyledLink("/", tempIcon, "OTW!")}
+            {StyledLink("/", tempIcon, "OTW!")}
           </nav>
         </div>
       </div>

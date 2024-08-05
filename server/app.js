@@ -4,7 +4,6 @@ import { query } from './db.js';
 import { createHash } from 'crypto';
 
 import { Hono } from 'hono';
-import { cache } from 'hono/cache'
 import { compress } from 'hono/compress'
 import { serve } from '@hono/node-server';
 
@@ -75,8 +74,9 @@ app.get('/heterogenous_lookup', async (c) => {
     if (endDate && !startDate) {
       return c.json({ error: 'End date provided without start date' }, 400)
     }
-
+		console.time('generateCacheKey')
     const cacheKey = generateCacheKey(imei, startDate, endDate, hetOnly)
+    console.timeEnd('generateCacheKey')
     const ifNoneMatch = c.req.header('If-None-Match')
 
     // Check if the client's cached version is still valid
