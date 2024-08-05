@@ -49,9 +49,19 @@ const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
 
     return (
       <React.Fragment key={key}>
-        <Marker position={[d.lat, d.lng]} icon={icon}>
+        <Marker position={[Number(d.lat), Number(d.lng)]} icon={icon}>
           <Popup>
             <div>
+              <p>
+                Lat: <a href={`https://www.google.com/maps?q=${d.lat},${d.lng}`} target="_blank" rel="noopener noreferrer">
+                  {d.lat}
+                </a>
+              </p>
+              <p>
+                Lng: <a href={`https://www.google.com/maps?q=${d.lat},${d.lng}`} target="_blank" rel="noopener noreferrer">
+                  {d.lng}
+                </a>
+              </p>
               <p>{d.type === "wifi" ? `Mac Address: ${d.mac_address}` : d.type === "gsm" ? `CID: ${d.cid}` : d.type}</p>
               <p>{d.type === "gsm" ? `LAC: ${d.lac}` : ""}</p>
               <p>{d.type === "gsm" ? `MCC: ${d.mcc}` : ""}</p>
@@ -61,7 +71,7 @@ const AdditionalPoints: React.FC<{ msg: msgData }> = ({ msg }) => {
           </Popup>
         </Marker>
         <Circle
-          center={[d.lat, d.lng]}
+          center={[Number(d.lat), Number(d.lng)]}
           radius={radius}
           color={color}
           fillColor={color}
