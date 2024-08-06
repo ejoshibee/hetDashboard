@@ -68,31 +68,13 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, setRelocatedPoint
     );
   };
 
-  const handlevalidateOrRelocate = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    e.preventDefault()
-    if (isDisabled) {
-      console.log("Cannot validate or relocate: Invalid data state");
-      return;
-    }
-    // Additional logic for validate or relocate if needed
-  };
-
-  const handleValidateSignal = () => {
-    // Logic for validate signal
-    console.log("Validating signal...");
-  };
-
-  const handleThirdTool = () => {
-    // Logic for third tool
-    console.log("Third tool activated!");
-  };
 
   return (
     <div className='w-full sm:w-full md:w-2/3 lg:w-1/2 xl:w-1/3'>
       <div className="flex flex-row justify-between gap-2">
         <ToolboxButton
           label="Relocate Message"
-          onClick={handlevalidateOrRelocate}
+          // onClick={handlevalidateOrRelocate}
           disabled={isDisabled}
           variant='primary'
         >
@@ -111,13 +93,13 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, setRelocatedPoint
                 placeholder="Enter longitude"
                 className="w-full mt-2 p-2 border border-neutral-300 rounded-md text-small text-neutral-900 focus:outline-none focus:ring-2 focus:ring-yellow-bee-400 focus:border-transparent"
               />
-              <button type="submit" onClick={() => setRelocatedPoint(relocate(filteredData))} className="mt-4 py-2 px-4 bg-yellow-bee-400 text-button rounded-md">Relocate</button>
+              <button type="submit" onClick={() => setRelocatedPoint(relocate(filteredData))} className="mt-4 py-2 px-4 bg-yellow-bee-300 hover:bg-yellow-bee-100 text-button rounded-md">Relocate</button>
             </Form>
           </div>
         </ToolboxButton>
 
         <ToolboxButton
-          label="Validate Signal"
+          label="Validate Signals"
           variant='secondary'
           disabled={isDisabled}
         >
@@ -156,7 +138,6 @@ const Toolbox: React.FC<ToolboxProps> = ({ data, filteredData, setRelocatedPoint
 
         <ToolboxButton
           label="Third Tool OTW!"
-          onClick={handleThirdTool}
           variant='secondary'
           disabled={isDisabled}
         >

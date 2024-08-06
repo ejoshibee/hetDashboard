@@ -177,7 +177,7 @@ const LocationImpactMap: React.FC<LocationImpactMapProps> = ({ data, uuidView })
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center bg-white shadow-md z-30">
-        <div className="w-full sm:w-2/3 mb-4 sm:mb-0 sm:mr-4">
+        <div className="w-full items-center sm:w-2/3 mb-4 sm:mb-0 sm:mr-4">
           <MsgUuidSelector
             uuidView={uuidView}
             options={uniqueMsgUuids}

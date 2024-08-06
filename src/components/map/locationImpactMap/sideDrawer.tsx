@@ -10,6 +10,7 @@ interface SideDrawerProps {
 
 const SideDrawer: React.FC<SideDrawerProps> = ({ data, onClose, onItemClick }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [allExpanded, setAllExpanded] = useState<boolean>(false);
   const listRef = useRef<List>(null);
 
   const toggleItem = (uuid: string) => {
@@ -27,25 +28,40 @@ const SideDrawer: React.FC<SideDrawerProps> = ({ data, onClose, onItemClick }) =
     }
   };
 
+  const toggleAllItems = () => {
+    if (allExpanded) {
+      setExpandedItems(new Set());
+    } else {
+      const allUuids = new Set(data.map(item => item.msg_uuid));
+      setExpandedItems(allUuids);
+    }
+    setAllExpanded(!allExpanded);
+    if (listRef.current) {
+      listRef.current.resetAfterIndex(0);
+    }
+  };
+
   const getItemSize = (index: number) => {
     return expandedItems.has(data[index].msg_uuid) ? 200 : 80;
   };
 
-  const ArrowIcon = ({ isExpanded }: { isExpanded: boolean }) => (
-    <svg
-      className="w-4 h-4 text-neutral-500"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d={isExpanded ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'}
-      />
-    </svg>
+  const ArrowIcon = ({ isExpanded, onClick }: { isExpanded: boolean, onClick: () => void }) => (
+    <div onClick={onClick}>
+      <svg
+        className="w-4 h-4 text-neutral-500"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d={isExpanded ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'}
+        />
+      </svg>
+    </div>
   );
 
   const formatDate = (timestamp: number) => {
@@ -57,9 +73,17 @@ const SideDrawer: React.FC<SideDrawerProps> = ({ data, onClose, onItemClick }) =
     <div className="flex flex-col h-full bg-white shadow-lg">
       <div className="flex justify-between items-center p-4 border-b border-neutral-200">
         <h2 className="text-lg font-semibold">Points</h2>
-        <button onClick={onClose} className="text-neutral-500 hover:text-neutral-700">
-          &times;
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={toggleAllItems}
+            className="mr-4 text-neutral-500 hover:text-neutral-700"
+          >
+            {allExpanded ? 'Collapse All' : 'Expand All'}
+          </button>
+          <button onClick={onClose} className="text-neutral-500 hover:text-neutral-700">
+            &times;
+          </button>
+        </div>
       </div>
       <div className="flex-grow overflow-hidden">
         <List
@@ -84,13 +108,12 @@ const SideDrawer: React.FC<SideDrawerProps> = ({ data, onClose, onItemClick }) =
               >
                 <div
                   className="flex justify-between items-center cursor-pointer"
-                  onClick={() => toggleItem(msg.msg_uuid)}
                 >
                   <div className="flex-grow">
                     <h3 className="text-sm font-semibold break-all">{msg.msg_uuid}</h3>
                     <p className="text-xs text-neutral-600 break-all">{msgGeo.msg_source}</p>
                   </div>
-                  <ArrowIcon isExpanded={isExpanded} />
+                  <ArrowIcon onClick={() => toggleItem(msg.msg_uuid)} isExpanded={isExpanded} />
                 </div>
                 {isExpanded && (
                   <div className="mt-2 text-xs">
